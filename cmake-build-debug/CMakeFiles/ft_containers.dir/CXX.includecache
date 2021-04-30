@@ -1,0 +1,22 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/Users/aberry/Desktop/21_project/ContainerSTL/main.cc
+memory
+-
+iostream
+-
+tools/memory.h
+/Users/aberry/Desktop/21_project/ContainerSTL/tools/memory.h
+
+/Users/aberry/Desktop/21_project/ContainerSTL/tools/memory.h
+iostream
+/Users/aberry/Desktop/21_project/ContainerSTL/tools/iostream
+new
+-
+
