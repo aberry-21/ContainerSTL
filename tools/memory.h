@@ -85,7 +85,7 @@ public:
     typedef T*                                    pointer;
     typedef const T*                              const_pointer;
     typedef typename add_lvalue_reference<T>::type       reference;
-    typedef typename add_lvalue_reference<const T>::type const_reference;
+      typedef typename add_lvalue_reference<const T>::type const_reference;
     typedef T                                     value_type;
 
     template <class U> struct rebind {typedef allocator<U> other;};
@@ -118,6 +118,18 @@ bool operator!=(const allocator<T>&, const allocator<U>&) noexcept;
 
 namespace ft {
 
+  template <class T>
+  struct RemoveConst
+  {
+    typedef T type;
+  };
+
+  template <class T>
+  struct RemoveConst<const T>
+  {
+    typedef T type;
+  };
+
   template <class Tp> class Allocator;
 
   template<>
@@ -138,9 +150,9 @@ namespace ft {
     typedef ptrdiff_t                                           difference_type;
     typedef T*                                                  pointer;
     typedef const T*                                            const_pointer;
+    typedef T&                                                  reference;
+    typedef const T&                                            const_reference;
     typedef T                                                   value_type;
-    typedef value_type&                                         reference;
-    typedef const value_type&                                   const_reference;
 
     template<class U>
     struct rebind { typedef Allocator<U> other; };
@@ -156,10 +168,6 @@ namespace ft {
       return reinterpret_cast<pointer>(&x);
     }
 
-    const_pointer address(const_reference x) const noexcept {
-      return reinterpret_cast<const_pointer>(address(x));
-    }
-
   //  allocates uninitialized storage
     pointer allocate(size_type size, Allocator<void>::const_pointer hint = 0) {
       return reinterpret_cast<pointer>(
@@ -167,8 +175,8 @@ namespace ft {
     }
 
   //  deallocates storage
-    void deallocate(pointer p, size_type n) noexcept {
-      ::operator delete(p);
+    void deallocate(pointer p, size_type n) const noexcept {
+      ::operator delete(const_cast<typename RemoveConst<T>::type*>(p));
     }
 
   //  returns the largest supported allocation size
@@ -179,7 +187,7 @@ namespace ft {
   //  constructs an object in allocated storage
     template<class U, class... Args>
     void construct(U *p, Args &&... args) {
-      new(p) U(args...);
+      new(const_cast<typename RemoveConst<T>::type*>(p)) U(args...);
     }
 
   //  destructs an object in allocated storage
