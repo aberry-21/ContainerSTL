@@ -11,12 +11,20 @@ memory
 -
 iostream
 -
+vector
+-
 tools/memory.h
 /Users/aberry/Desktop/21_project/ContainerSTL/tools/memory.h
+vector/vector.h
+/Users/aberry/Desktop/21_project/ContainerSTL/vector/vector.h
 
 /Users/aberry/Desktop/21_project/ContainerSTL/tools/memory.h
-iostream
-/Users/aberry/Desktop/21_project/ContainerSTL/tools/iostream
 new
 -
+
+/Users/aberry/Desktop/21_project/ContainerSTL/vector/vector.h
+utility
+-
+tools/memory.h
+/Users/aberry/Desktop/21_project/ContainerSTL/vector/tools/memory.h
 

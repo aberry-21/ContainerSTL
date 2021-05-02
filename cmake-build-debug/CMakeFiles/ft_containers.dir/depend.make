@@ -3,4 +3,5 @@
 
 CMakeFiles/ft_containers.dir/main.cc.o: ../main.cc
 CMakeFiles/ft_containers.dir/main.cc.o: ../tools/memory.h
+CMakeFiles/ft_containers.dir/main.cc.o: ../vector/vector.h
 

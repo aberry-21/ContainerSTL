@@ -4,8 +4,9 @@
 
 #include <memory>
 #include <iostream>
-
+#include <vector>
 #include "tools/memory.h"
+#include "vector/vector.h"
 
 int main() {
   {
@@ -35,6 +36,7 @@ int main() {
   }
   std::cout << "_____________________________________________" << '\n';
   {
+    std::allocator_traits<std::allocator<int>>d;
     std::allocator<int> a1;   // default allocator for ints
     int* a = a1.allocate(10);  // space for one int
     a1.construct(&a[0], 7);
@@ -59,4 +61,9 @@ int main() {
     std::cout << *a1.address(*a) << '\n';
     a1.deallocate(a, 10);      // deallocate space for one int
   }
+
+
+  std::vector<int> the_vector;
+  ft::Vector<int> the_vector_1(the_vector.max_size() + 1222);
+
 }

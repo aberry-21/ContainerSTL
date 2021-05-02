@@ -3,7 +3,7 @@
 //
 //                     Created by Aaron Berry on 4/30/21.
 //
-//                allocator_traits and allocator implementation
+//                        Allocator implementation
 //
 //===----------------------------------------------------------------------===//
 
@@ -12,70 +12,6 @@
 
 namespace ft
 {
-
-template <class Alloc>
-struct allocator_traits
-{
-    typedef Alloc                        allocator_type;
-    typedef typename allocator_type::value_type
-                                         value_type;
-
-    typedef Alloc::pointer | value_type* pointer;
-    typedef Alloc::const_pointer
-          | pointer_traits<pointer>::rebind<const value_type>
-                                         const_pointer;
-    typedef Alloc::void_pointer
-          | pointer_traits<pointer>::rebind<void>
-                                         void_pointer;
-    typedef Alloc::const_void_pointer
-          | pointer_traits<pointer>::rebind<const void>
-                                         const_void_pointer;
-    typedef Alloc::difference_type
-          | pointer_traits<pointer>::difference_type
-                                         difference_type;
-    typedef Alloc::size_type
-          | make_unsigned<difference_type>::type
-                                         size_type;
-    typedef Alloc::propagate_on_container_copy_assignment
-          | false_type                   propagate_on_container_copy_assignment;
-    typedef Alloc::propagate_on_container_move_assignment
-          | false_type                   propagate_on_container_move_assignment;
-    typedef Alloc::propagate_on_container_swap
-          | false_type                   propagate_on_container_swap;
-    typedef Alloc::is_always_equal
-          | is_empty                     is_always_equal;
-
-    template <class T> using rebind_alloc  = Alloc::rebind<U>::other | Alloc<T, Args...>;
-    template <class T> using rebind_traits = allocator_traits<rebind_alloc<T>>;
-
-    static pointer allocate(allocator_type& a, size_type n);                          // [[nodiscard]] in C++20
-    static pointer allocate(allocator_type& a, size_type n, const_void_pointer hint); // [[nodiscard]] in C++20
-
-    static void deallocate(allocator_type& a, pointer p, size_type n) noexcept;
-
-    template <class T, class... Args>
-        static void construct(allocator_type& a, T* p, Args&&... args);
-
-    template <class T>
-        static void destroy(allocator_type& a, T* p);
-
-    static size_type max_size(const allocator_type& a); // noexcept in C++14
-
-    static allocator_type
-        select_on_container_copy_construction(const allocator_type& a);
-};
-
-template <>
-class allocator<void>
-{
-public:
-    typedef void*                                 pointer;
-    typedef const void*                           const_pointer;
-    typedef void                                  value_type;
-
-    template <class _Up> struct rebind {typedef allocator<_Up> other;};
-};
-
 template <class T>
 class allocator
 {
@@ -113,7 +49,7 @@ template <class T, class U>
 bool operator!=(const allocator<T>&, const allocator<U>&) noexcept;
 */
 
-#include "iostream"
+#pragma once
 #include <new>
 
 namespace ft {
@@ -170,12 +106,14 @@ namespace ft {
 
   //  allocates uninitialized storage
     pointer allocate(size_type size, Allocator<void>::const_pointer hint = 0) {
+      if (size >= max_size())
+        throw ;
       return reinterpret_cast<pointer>(
           ::operator new(size * sizeof(value_type)));
     }
 
   //  deallocates storage
-    void deallocate(pointer p, size_type n) const noexcept {
+    void deallocate(pointer p, size_type) const noexcept {
       ::operator delete(const_cast<typename RemoveConst<T>::type*>(p));
     }
 

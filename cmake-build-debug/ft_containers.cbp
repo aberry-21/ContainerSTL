@@ -88,6 +88,9 @@
 		<Unit filename="/Users/aberry/Desktop/21_project/ContainerSTL/tools/memory.h">
 			<Option target="ft_containers"/>
 		</Unit>
+		<Unit filename="/Users/aberry/Desktop/21_project/ContainerSTL/vector/vector.h">
+			<Option target="ft_containers"/>
+		</Unit>
 		<Unit filename="/Users/aberry/Desktop/21_project/ContainerSTL/CMakeLists.txt">
 			<Option virtualFolder="CMake Files\"/>
 		</Unit>

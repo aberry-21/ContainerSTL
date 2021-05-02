@@ -13,6 +13,6 @@ add_compile_options(
 set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
 
 #aux_source_directory(tools DIR_SRCS)
-add_executable(${PROJECT_NAME} tools/memory.h main.cc)
+add_executable(${PROJECT_NAME} tools/memory.h main.cc vector/vector.h)
 
 target_include_directories(${PROJECT_NAME} PUBLIC .)
