@@ -6,64 +6,85 @@
 #include <iostream>
 #include <vector>
 #include "tools/memory.h"
+#include "tools/profile.h"
 #include "vector/vector.h"
 
+void* operator new(std::size_t sz) // no inline, required by [replacement.functions]/3
+{
+  std::printf("global op new called, size = %zu\n", sz);
+  if (sz == 0)
+    ++sz; // avoid std::malloc(0) which may return nullptr on success
+
+  if (void *ptr = std::malloc(sz))
+    return ptr;
+
+  throw std::bad_alloc{}; // required by [new.delete.single]/3
+}
+
+void operator delete(void* ptr) noexcept
+{
+  std::puts("global op delete called");
+  std::free(ptr);
+}
 int main() {
-  {
-    ft::Allocator<int> a1;   // default allocator for ints
-    int* a = a1.allocate(10);  // space for one int
-    a1.construct(&a[0], 7);
-    a1.construct(&a[1], 8);
-    std::cout << a[0] << '\n';
-    std::cout << a[1] << '\n';
-    a[1] = 2;
-    std::cout << a[1] << '\n';
-    std::cout << *a1.address(*a) << '\n';
-    a1.deallocate(a, 10);      // deallocate space for one int
-  }
-  std::cout << "_____________________________________________" << '\n';
-  {
-    ft::Allocator<const int> a1;   // default allocator for ints
-    const int* a = a1.allocate(10);  // space for one int
-    a1.construct(&a[0], 7);
-    a1.construct(&a[1], 8);
-    std::cout << a[0] << '\n';
-    std::cout << a[1] << '\n';
-    a1.construct(&a[1], 3);
-    std::cout << a[1] << '\n';
-    std::cout << *a1.address(*a) << '\n';
-    a1.deallocate(a, 10);      // deallocate space for one int
-  }
-  std::cout << "_____________________________________________" << '\n';
-  {
-    std::allocator_traits<std::allocator<int>>d;
-    std::allocator<int> a1;   // default allocator for ints
-    int* a = a1.allocate(10);  // space for one int
-    a1.construct(&a[0], 7);
-    a1.construct(&a[1], 8);
-    std::cout << a[0] << '\n';
-    std::cout << a[1] << '\n';
-    a[1] = 2;
-    std::cout << a[1] << '\n';
-    std::cout << *a1.address(*a) << '\n';
-    a1.deallocate(a, 10);      // deallocate space for one int
-  }
-  std::cout << "_____________________________________________" << '\n';
-  {
-    std::allocator<const int> a1;   // default allocator for ints
-    const int* a = a1.allocate(10);  // space for one int
-    a1.construct(&a[0], 7);
-    a1.construct(&a[1], 8);
-    std::cout << a[0] << '\n';
-    std::cout << a[1] << '\n';
-    a1.construct(&a[1], 3);
-    std::cout << a[1] << '\n';
-    std::cout << *a1.address(*a) << '\n';
-    a1.deallocate(a, 10);      // deallocate space for one int
-  }
+//    {
+//      LOG_DURATION("my");
+//      ft::Vector<const int> the_vector(1000000);
+//    }
+//    {
+//      LOG_DURATION("stl");
+//      std::vector<int> the_vector(1000000);
+//    }
+//    {
+//      LOG_DURATION("stl");
+//      std::vector<int> foo (30,0);
+//      std::vector<int> bar (5,0);
+//
+//      std::cout << "capacity of bar: " << int(bar.capacity()) << '\n';
+//      std::cout << "capacity of foo: " << int(foo.capacity()) << '\n';
+//      bar = foo;
+//      foo = std::vector<int>();
+//      std::cout << "capacity of bar: " << int(bar.capacity()) << '\n';
+//      std::cout << "capacity of foo: " << int(foo.capacity()) << '\n';
+//      std::cout << "Size of foo: " << int(foo.size()) << '\n';
+//      std::cout << "Size of bar: " << int(bar.size()) << '\n';
+//    }
+//    std::cout << "______________________" << '\n';
+//
+//    {
+//      LOG_DURATION("my");
+//      ft::Vector<int> foo (30,0);
+//      ft::Vector<int> bar (5,0);
+//
+//      std::cout << "capacity of bar: " << int(bar.capacity()) << '\n';
+//      std::cout << "capacity of foo: " << int(foo.capacity()) << '\n';
+//      bar = foo;
+//
+//      foo = ft::Vector<int>();
+//      std::cout << "capacity of bar: " << int(bar.capacity()) << '\n';
+//      std::cout << "capacity of foo: " << int(foo.capacity()) << '\n';
+//      std::cout << "Size of foo: " << int(foo.size()) << '\n';
+//      std::cout << "Size of bar: " << int(bar.size()) << '\n';
+//    }
 
-
-  std::vector<int> the_vector;
-  ft::Vector<int> the_vector_1(the_vector.max_size() + 1222);
+  {
+    std::vector<int> myvector (3,2);
+    std::cout << "capacity " << myvector.capacity() << '\n';
+    myvector.reserve(4);
+    std::cout << "capacity " << myvector.capacity() << '\n';
+    std::cout << "size " << myvector.size() << '\n';
+  }
+  std::cout << "____________________________________" << '\n';
+  {
+    ft::Vector<int> myvector (3,2);
+    std::cout << "capacity " << myvector.capacity() << '\n';
+    myvector.resize(10, myvector[1]);
+    std::cout << "capacity " << myvector.capacity() << '\n';
+    std::cout << "size " << myvector.size() << '\n';
+    for (int i = 0; i < myvector.size(); ++i) {
+      std::cout << ' ' << myvector[i];
+    }
+    std::cout << '\n';
+  }
 
 }

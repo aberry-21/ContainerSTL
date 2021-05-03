@@ -7,51 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-/*
-    memory synopsis
-
-namespace ft
-{
-template <class T>
-class allocator
-{
-public:
-    typedef size_t                                size_type;
-    typedef ptrdiff_t                             difference_type;
-    typedef T*                                    pointer;
-    typedef const T*                              const_pointer;
-    typedef typename add_lvalue_reference<T>::type       reference;
-      typedef typename add_lvalue_reference<const T>::type const_reference;
-    typedef T                                     value_type;
-
-    template <class U> struct rebind {typedef allocator<U> other;};
-
-    constexpr allocator() noexcept;                      // constexpr in C++20
-    constexpr allocator(const allocator&) noexcept;      // constexpr in C++20
-    template <class U>
-      constexpr allocator(const allocator<U>&) noexcept; // constexpr in C++20
-    ~allocator();
-    pointer address(reference x) const noexcept;
-    const_pointer address(const_reference x) const noexcept;
-    pointer allocate(size_type, allocator<void>::const_pointer hint = 0);
-    void deallocate(pointer p, size_type n) noexcept;
-    size_type max_size() const noexcept;
-    template<class U, class... Args>
-        void construct(U* p, Args&&... args);
-    template <class U>
-        void destroy(U* p);
-};
-
-template <class T, class U>
-bool operator==(const allocator<T>&, const allocator<U>&) noexcept;
-
-template <class T, class U>
-bool operator!=(const allocator<T>&, const allocator<U>&) noexcept;
-*/
-
 #pragma once
 #include <new>
-
+#include "Exception.h"
 namespace ft {
 
   template <class T>
@@ -93,11 +51,11 @@ namespace ft {
     template<class U>
     struct rebind { typedef Allocator<U> other; };
 
-    constexpr Allocator() noexcept {};
-    ~Allocator() {};
-    constexpr Allocator(const Allocator &other) noexcept {};
+    constexpr Allocator() noexcept = default;
+    ~Allocator() noexcept = default;
+    constexpr explicit Allocator(int other) noexcept {};
     template<class U>
-    constexpr Allocator(const Allocator<U> &other) noexcept {};
+    constexpr explicit Allocator(const Allocator<U> &other) noexcept {};
 
   //  obtains the address of an object, even if operator& is overloaded
     pointer address(reference x) const noexcept {
@@ -105,11 +63,15 @@ namespace ft {
     }
 
   //  allocates uninitialized storage
-    pointer allocate(size_type size, Allocator<void>::const_pointer hint = 0) {
-      if (size >= max_size())
-        throw ;
-      return reinterpret_cast<pointer>(
-          ::operator new(size * sizeof(value_type)));
+    pointer allocate(size_type size,
+                     Allocator<void>::const_pointer hint = nullptr) {
+      if (size >= max_size()) {
+        throw ft::Length_error("allocator<const T>::allocate(size_t n) 'n'"
+                               " exceeds maximum supported size");
+      }
+      pointer ptr;
+        return reinterpret_cast<pointer>(
+            ::operator new(size * sizeof(value_type)));
     }
 
   //  deallocates storage
@@ -136,12 +98,14 @@ namespace ft {
   };
 
   template<class T, class U>
-  bool operator==(const Allocator<T> &target, const Allocator<U> &other) noexcept {
+  bool operator==(const Allocator<T> &target,
+                  const Allocator<U> &other) noexcept {
     return true;
   }
 
   template<class T, class U>
-  bool operator!=(const Allocator<T> &target, const Allocator<U> &other) noexcept {
+  bool operator!=(const Allocator<T> &target,
+                  const Allocator<U> &other) noexcept {
     return !operator==<T, U>(target, other);
   }
 }

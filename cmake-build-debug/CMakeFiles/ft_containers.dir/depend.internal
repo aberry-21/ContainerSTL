@@ -3,5 +3,7 @@
 
 CMakeFiles/ft_containers.dir/main.cc.o
  /Users/aberry/Desktop/21_project/ContainerSTL/main.cc
+ /Users/aberry/Desktop/21_project/ContainerSTL/tools/Exception.h
  /Users/aberry/Desktop/21_project/ContainerSTL/tools/memory.h
+ /Users/aberry/Desktop/21_project/ContainerSTL/tools/profile.h
  /Users/aberry/Desktop/21_project/ContainerSTL/vector/vector.h
