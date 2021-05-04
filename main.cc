@@ -8,6 +8,7 @@
 #include "tools/memory.h"
 #include "tools/profile.h"
 #include "vector/vector.h"
+#include "vector/RandomAccessIterator.h"
 
 void* operator new(std::size_t sz) // no inline, required by [replacement.functions]/3
 {
@@ -67,24 +68,53 @@ int main() {
 //      std::cout << "Size of bar: " << int(bar.size()) << '\n';
 //    }
 
+//  {
+//    std::vector<int> myvector (3,2);
+//    std::cout << "capacity " << myvector.capacity() << '\n';
+//    myvector.reserve(4);
+//    std::cout << "capacity " << myvector.capacity() << '\n';
+//    std::cout << "size " << myvector.size() << '\n';
+//  }
+//  std::cout << "____________________________________" << '\n';
+//  {
+//    ft::Vector<int> myvector (3,2);
+//    std::cout << "capacity " << myvector.capacity() << '\n';
+//    myvector.resize(10, myvector[1]);
+//    std::cout << "capacity " << myvector.capacity() << '\n';
+//    std::cout << "size " << myvector.size() << '\n';
+//    for (int i = 0; i < myvector.size(); ++i) {
+//      std::cout << ' ' << myvector[i];
+//    }
+//    std::cout << '\n';
+//  }
+
   {
-    std::vector<int> myvector (3,2);
-    std::cout << "capacity " << myvector.capacity() << '\n';
-    myvector.reserve(4);
-    std::cout << "capacity " << myvector.capacity() << '\n';
-    std::cout << "size " << myvector.size() << '\n';
+    std::vector<const int> myvector (5,2);
+    std::vector<const int> myvector2 (5,1);
+
+
+
+    std::vector<const int> myvector_2(myvector.end(), myvector.begin());
+
+
+
+
+    for (const auto &item : myvector_2) {
+      std::cout << item << ' ' ;
+    }
+    std::cout << '\n' ;
   }
   std::cout << "____________________________________" << '\n';
   {
-    ft::Vector<int> myvector (3,2);
-    std::cout << "capacity " << myvector.capacity() << '\n';
-    myvector.resize(10, myvector[1]);
-    std::cout << "capacity " << myvector.capacity() << '\n';
-    std::cout << "size " << myvector.size() << '\n';
-    for (int i = 0; i < myvector.size(); ++i) {
-      std::cout << ' ' << myvector[i];
+    ft::Vector<const int> myvector (3,2);
+    ft::Vector<const int> myvector_2(myvector);
+
+    auto iter = myvector.begin();
+    for (const auto &item : myvector) {
+      std::cout << item << ' ' ;
     }
-    std::cout << '\n';
+    std::cout << '\n' ;
   }
+
 
 }

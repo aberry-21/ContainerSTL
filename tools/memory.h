@@ -10,20 +10,9 @@
 #pragma once
 #include <new>
 #include "Exception.h"
+#include "tools/utility.h"
+
 namespace ft {
-
-  template <class T>
-  struct RemoveConst
-  {
-    typedef T type;
-  };
-
-  template <class T>
-  struct RemoveConst<const T>
-  {
-    typedef T type;
-  };
-
   template <class Tp> class Allocator;
 
   template<>

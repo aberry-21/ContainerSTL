@@ -6,6 +6,12 @@
 
 #IncludeRegexTransform: 
 
+../tools/ReverseIterator.h
+tools/utility.h
+../tools/tools/utility.h
+
+../tools/utility.h
+
 /Users/aberry/Desktop/21_project/ContainerSTL/main.cc
 memory
 -
@@ -19,6 +25,8 @@ tools/profile.h
 /Users/aberry/Desktop/21_project/ContainerSTL/tools/profile.h
 vector/vector.h
 /Users/aberry/Desktop/21_project/ContainerSTL/vector/vector.h
+vector/RandomAccessIterator.h
+/Users/aberry/Desktop/21_project/ContainerSTL/vector/RandomAccessIterator.h
 
 /Users/aberry/Desktop/21_project/ContainerSTL/tools/Exception.h
 utility
@@ -29,6 +37,8 @@ new
 -
 Exception.h
 /Users/aberry/Desktop/21_project/ContainerSTL/tools/Exception.h
+tools/utility.h
+/Users/aberry/Desktop/21_project/ContainerSTL/tools/tools/utility.h
 
 /Users/aberry/Desktop/21_project/ContainerSTL/tools/profile.h
 chrono
@@ -38,9 +48,21 @@ iostream
 string
 -
 
+/Users/aberry/Desktop/21_project/ContainerSTL/vector/RandomAccessIterator.h
+cstddef
+-
+tools/utility.h
+/Users/aberry/Desktop/21_project/ContainerSTL/vector/tools/utility.h
+
 /Users/aberry/Desktop/21_project/ContainerSTL/vector/vector.h
 utility
 -
 tools/memory.h
 /Users/aberry/Desktop/21_project/ContainerSTL/vector/tools/memory.h
+vector/RandomAccessIterator.h
+/Users/aberry/Desktop/21_project/ContainerSTL/vector/vector/RandomAccessIterator.h
+tools/ReverseIterator.h
+/Users/aberry/Desktop/21_project/ContainerSTL/vector/tools/ReverseIterator.h
+tools/utility.h
+/Users/aberry/Desktop/21_project/ContainerSTL/vector/tools/utility.h
 
