@@ -8,7 +8,7 @@
 #include "tools/memory.h"
 #include "tools/profile.h"
 #include "vector/vector.h"
-#include "vector/RandomAccessIterator.h"
+#include "vector/random_access_iterator.h"
 
 void* operator new(std::size_t sz) // no inline, required by [replacement.functions]/3
 {
@@ -21,100 +21,168 @@ void* operator new(std::size_t sz) // no inline, required by [replacement.functi
 
   throw std::bad_alloc{}; // required by [new.delete.single]/3
 }
+//
+//void operator delete(void* ptr) noexcept
+//{
+//  std::puts("global op delete called");
+//  std::free(ptr);
+//}
 
-void operator delete(void* ptr) noexcept
-{
-  std::puts("global op delete called");
-  std::free(ptr);
+class MyClass {
+ public:
+  MyClass(int x) : x_(x) {
+    std::cout << "Create class" << std::endl;
+  }
+
+  ~MyClass() {
+    std::cout << "Destroy class" << std::endl;
+  }
+
+  // Copy Constructor
+  MyClass(const MyClass& my_class);
+  // Move Constructor
+  MyClass (MyClass&& my_class) noexcept;
+
+  MyClass& operator=(const MyClass& other);
+
+  MyClass& operator= (MyClass&& other) noexcept;
+
+ public:
+  int x_ = 0;
+
+};
+
+MyClass::MyClass(const MyClass &my_class) {
+  std::cout << "Copy Constructor Called" << std::endl;
+  x_ = my_class.x_;
 }
-int main() {
-//    {
-//      LOG_DURATION("my");
-//      ft::Vector<const int> the_vector(1000000);
-//    }
-//    {
-//      LOG_DURATION("stl");
-//      std::vector<int> the_vector(1000000);
-//    }
-//    {
-//      LOG_DURATION("stl");
-//      std::vector<int> foo (30,0);
-//      std::vector<int> bar (5,0);
-//
-//      std::cout << "capacity of bar: " << int(bar.capacity()) << '\n';
-//      std::cout << "capacity of foo: " << int(foo.capacity()) << '\n';
-//      bar = foo;
-//      foo = std::vector<int>();
-//      std::cout << "capacity of bar: " << int(bar.capacity()) << '\n';
-//      std::cout << "capacity of foo: " << int(foo.capacity()) << '\n';
-//      std::cout << "Size of foo: " << int(foo.size()) << '\n';
-//      std::cout << "Size of bar: " << int(bar.size()) << '\n';
-//    }
-//    std::cout << "______________________" << '\n';
-//
-//    {
-//      LOG_DURATION("my");
-//      ft::Vector<int> foo (30,0);
-//      ft::Vector<int> bar (5,0);
-//
-//      std::cout << "capacity of bar: " << int(bar.capacity()) << '\n';
-//      std::cout << "capacity of foo: " << int(foo.capacity()) << '\n';
-//      bar = foo;
-//
-//      foo = ft::Vector<int>();
-//      std::cout << "capacity of bar: " << int(bar.capacity()) << '\n';
-//      std::cout << "capacity of foo: " << int(foo.capacity()) << '\n';
-//      std::cout << "Size of foo: " << int(foo.size()) << '\n';
-//      std::cout << "Size of bar: " << int(bar.size()) << '\n';
-//    }
 
+MyClass::MyClass(MyClass &&my_class) noexcept {
+  std::cout << "Move Constructor Called" << std::endl;
+  x_ = std::move(my_class.x_);
+  my_class.x_ = 0;
+}
+MyClass &MyClass::operator=(const MyClass &my_class) {
+  x_ = my_class.x_;
+  return *this;
+}
+MyClass &MyClass::operator=(MyClass &&my_class) noexcept {
+  x_ = std::move(my_class.x_);
+  my_class.x_ = 0;
+  return  *this;
+}
+
+int main()
+{
 //  {
-//    std::vector<int> myvector (3,2);
-//    std::cout << "capacity " << myvector.capacity() << '\n';
-//    myvector.reserve(4);
-//    std::cout << "capacity " << myvector.capacity() << '\n';
-//    std::cout << "size " << myvector.size() << '\n';
+//
+//    std::vector<MyClass> from_vector;
+//    from_vector.reserve(10);
+//    from_vector.emplace_back(0);
+//    from_vector.emplace_back(1);
+//    from_vector.emplace_back(2);
+//    from_vector.emplace_back(3);
+//    for (const auto &item : from_vector) {
+//      std::cout << item.x_ << ' ';
+//    }
+//    std::cout << '\n';
+//    std::cout << "_____________insert___________" << std::endl;
+//    from_vector.insert(from_vector.end() - 4 , 3, 22);
+//    std::cout << "______________________________" << std::endl;
+//    for (const auto &item : from_vector) {
+//      std::cout << item.x_ << ' ';
+//    }
+//    std::cout << '\n';
 //  }
-//  std::cout << "____________________________________" << '\n';
 //  {
-//    ft::Vector<int> myvector (3,2);
-//    std::cout << "capacity " << myvector.capacity() << '\n';
-//    myvector.resize(10, myvector[1]);
-//    std::cout << "capacity " << myvector.capacity() << '\n';
-//    std::cout << "size " << myvector.size() << '\n';
-//    for (int i = 0; i < myvector.size(); ++i) {
-//      std::cout << ' ' << myvector[i];
+//    std::cout << "_______________MY_______________" << std::endl;
+//    ft::Vector<MyClass> from_vector(4);
+//    from_vector[0].x_ = 0;
+//    from_vector[1].x_ = 1;
+//    from_vector[2].x_ = 2;
+//    from_vector[3].x_ = 3;
+//    for (const auto &item : from_vector) {
+//      std::cout << item.x_ << ' ';
+//    }
+//    from_vector.reserve(10);
+//    from_vector.move_range(from_vector.end() - 4 , 3);
+//    for (const auto &item : from_vector) {
+//      std::cout << item.x_ << ' ';
+//    }
+//    std::cout << '\n';
+//  }
+//  {
+//    std::vector<MyClass> vector;
+//    auto iter = vector.insert(vector.begin(),5, 1);
+//    std::cout << '\n';
+//    iter = vector.insert(vector.begin(),2, 4);
+//    std::cout << iter->x_;
+//    for (const auto &item : vector) {
+//      std::cout << item.x_ << ' ';
 //    }
 //    std::cout << '\n';
 //  }
 
   {
-    std::vector<const int> myvector (5,2);
-    std::vector<const int> myvector2 (5,1);
-
-
-
-    std::vector<const int> myvector_2(myvector.end(), myvector.begin());
-
-
-
-
-    for (const auto &item : myvector_2) {
-      std::cout << item << ' ' ;
+    ft::Vector<MyClass> vector;
+//    vector.reserve(100);
+    auto iter = vector.insert(vector.begin(),2, 1);
+    std::cout << "__________________________________\n";
+    iter = vector.insert(vector.begin() + 2,2, -1);
+    std::cout << "__________________________________\n";
+    for (const auto &item : vector) {
+      std::cout << item.x_ << ' ';
     }
-    std::cout << '\n' ;
+    std::cout << '\n';
   }
-  std::cout << "____________________________________" << '\n';
+  std::cout << "__________________________________\n";
   {
-    ft::Vector<const int> myvector (3,2);
-    ft::Vector<const int> myvector_2(myvector);
+    std::vector<MyClass> vector;
+//    vector.reserve(100);
+    auto iter = vector.insert(vector.begin(),2, 1);
+    std::cout << "__________________________________\n";
+    iter = vector.insert(vector.begin() + 2,2, -1);
+    std::cout << "__________________________________\n";
 
-    auto iter = myvector.begin();
-    for (const auto &item : myvector) {
-      std::cout << item << ' ' ;
+    for (const auto &item : vector) {
+      std::cout << item.x_ << ' ';
     }
-    std::cout << '\n' ;
+    std::cout << '\n';
   }
 
+}
 
+
+void Test1() {
+  {
+    ft::Vector<MyClass> vector;
+    ft::Vector<MyClass> vector2;
+    vector.insert(vector2.begin(), 10, 10);
+  }
+  std::cout << "__________________________________\n";
+  {
+    std::vector<MyClass> vector;
+    std::vector<MyClass> vector2;
+    vector.insert(vector2.begin(), 10, 10);
+  }
+}
+
+void Test2() {
+  {
+    ft::Vector<MyClass> vector;
+  }
+  std::cout << "__________________________________\n";
+  {
+    std::vector<MyClass> vector;
+  }
+}
+
+void Test3() {
+  {
+    ft::Vector<MyClass> vector;
+  }
+  std::cout << "__________________________________\n";
+  {
+    std::vector<MyClass> vector;
+  }
 }

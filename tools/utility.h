@@ -5,7 +5,6 @@
 #pragma once
 
 namespace ft {
-
   template <class T>
   struct QualifierType
   {
@@ -31,19 +30,6 @@ namespace ft {
   {
     typedef T type;
   };
-
-  template<class T>
-  inline
-  typename std::remove_reference<T>::type&& move(T &&t) noexcept {
-    typedef typename std::remove_reference<T>::type Up;
-    return static_cast<Up &&>(t);
-  }
-
-  template<class T>
-  inline
-  void swap(T &a, T &b) noexcept {
-    T c(ft::move(a));
-    a = ft::move(b);
-    b = ft::move(c);
-  }
 }
+// [ 1 2 3 4 ]
+// [           9 ]

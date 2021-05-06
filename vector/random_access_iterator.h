@@ -9,7 +9,7 @@
 
 namespace ft {
   template <class T>
-  class RandomAccessIterator {
+  class random_access_iterator {
    public:
     typedef T                                           iterator_type;
     typedef std::random_access_iterator_tag             iterator_category;
@@ -18,20 +18,20 @@ namespace ft {
     typedef typename QualifierType <T>::pointer         pointer;
     typedef typename QualifierType <T>::reference       reference;
 
-    RandomAccessIterator() = default;
+    random_access_iterator() = default;
 
-    explicit RandomAccessIterator(pointer data)
+    explicit random_access_iterator(pointer data)
                                               : data_(data) {}
 
-    RandomAccessIterator(RandomAccessIterator const& other)
+    random_access_iterator(random_access_iterator const& other)
                                               : data_(other.data_) {}
 
-    RandomAccessIterator(RandomAccessIterator&& other) noexcept
+    random_access_iterator(random_access_iterator&& other) noexcept
                                               : data_(move(other.data_)) {}
 
-    virtual ~RandomAccessIterator() = default;
+    virtual ~random_access_iterator() = default;
 
-    RandomAccessIterator& operator=(RandomAccessIterator const& other) {
+    random_access_iterator& operator=(random_access_iterator const& other) {
       if (this == &other) {
         return *this;
       }
@@ -39,7 +39,7 @@ namespace ft {
       return *this;
     }
 
-    RandomAccessIterator& operator=(RandomAccessIterator&& other) noexcept {
+    random_access_iterator& operator=(random_access_iterator&& other) noexcept {
       if (this == &other) {
         return *this;
       }
@@ -56,44 +56,44 @@ namespace ft {
       return addressof(operator*());
     }
 
-    RandomAccessIterator& operator++() {
+    random_access_iterator& operator++() {
       ++data_;
       return *this;
     }
 
-    RandomAccessIterator operator++(int) {
-      RandomAccessIterator tmp(*this);
+    random_access_iterator operator++(int) {
+      random_access_iterator tmp(*this);
       ++(*this);
       return tmp;
     }
 
-    RandomAccessIterator& operator--() {
+    random_access_iterator& operator--() {
       --data_;
       return *this;
     }
 
-    RandomAccessIterator operator--(int) {
-      RandomAccessIterator tmp(*this);
+    random_access_iterator operator--(int) {
+      random_access_iterator tmp(*this);
       --(*this);
       return tmp;
     }
 
-    RandomAccessIterator operator+(difference_type n) const {
-      RandomAccessIterator new_data(*this);
+    random_access_iterator operator+(difference_type n) const {
+      random_access_iterator new_data(*this);
       new_data += n;
       return new_data;
     }
 
-    RandomAccessIterator& operator+=(difference_type n) {
-      data_ + n;
+    random_access_iterator& operator+=(difference_type n) {
+      data_ += n;
       return *this;
     }
 
-    RandomAccessIterator operator-(difference_type n) const {
+    random_access_iterator operator-(difference_type n) const {
       return (*this + (-n));
     }
 
-    RandomAccessIterator& operator-=(difference_type n) {
+    random_access_iterator& operator-=(difference_type n) {
       *this += -n;
       return *this;
     }
@@ -112,89 +112,89 @@ namespace ft {
 
   template <class Iter1, class Iter2>
   inline
-  bool operator==(const RandomAccessIterator<Iter1>& x,
-                  const RandomAccessIterator<Iter2>& y) {
+  bool operator==(const random_access_iterator<Iter1>& x,
+                  const random_access_iterator<Iter2>& y) {
     return (x.base() == y.base());
   }
 
   template <class Iter1, class Iter2>
   inline
-  bool operator<(const RandomAccessIterator<Iter1>& x,
-                  const RandomAccessIterator<Iter2>& y) {
+  bool operator<(const random_access_iterator<Iter1>& x,
+                  const random_access_iterator<Iter2>& y) {
     return (x.base() < y.base());
   }
 
   template <class Iter1, class Iter2>
   inline
-  bool operator!=(const RandomAccessIterator<Iter1>& x,
-                 const RandomAccessIterator<Iter2>& y) {
+  bool operator!=(const random_access_iterator<Iter1>& x,
+                 const random_access_iterator<Iter2>& y) {
     return !(x == y);
   }
 
   template <class Iter1, class Iter2>
   inline
-  bool operator>(const RandomAccessIterator<Iter1>& x,
-                 const RandomAccessIterator<Iter2>& y) {
+  bool operator>(const random_access_iterator<Iter1>& x,
+                 const random_access_iterator<Iter2>& y) {
     return (y < x);
   }
 
   template <class Iter1, class Iter2>
   inline
-  bool operator>=(const RandomAccessIterator<Iter1>& x,
-                 const RandomAccessIterator<Iter2>& y) {
+  bool operator>=(const random_access_iterator<Iter1>& x,
+                 const random_access_iterator<Iter2>& y) {
     return !(x < y);
   }
 
   template <class Iter1, class Iter2>
   inline
-  bool operator<=(const RandomAccessIterator<Iter1>& x,
-                 const RandomAccessIterator<Iter2>& y) {
+  bool operator<=(const random_access_iterator<Iter1>& x,
+                 const random_access_iterator<Iter2>& y) {
     return !(y < x);
   }
 
 
   template <class Iter1>
   inline
-  bool operator!=(const RandomAccessIterator<Iter1>& x,
-                  const RandomAccessIterator<Iter1>& y) {
+  bool operator!=(const random_access_iterator<Iter1>& x,
+                  const random_access_iterator<Iter1>& y) {
     return !(x == y);
   }
 
   template <class Iter1>
   inline
-  bool operator>(const RandomAccessIterator<Iter1>& x,
-                 const RandomAccessIterator<Iter1>& y) {
+  bool operator>(const random_access_iterator<Iter1>& x,
+                 const random_access_iterator<Iter1>& y) {
     return (y < x);
   }
 
   template <class Iter1>
   inline
-  bool operator>=(const RandomAccessIterator<Iter1>& x,
-                  const RandomAccessIterator<Iter1>& y) {
+  bool operator>=(const random_access_iterator<Iter1>& x,
+                  const random_access_iterator<Iter1>& y) {
     return !(x < y);
   }
 
   template <class Iter1>
   inline
-  bool operator<=(const RandomAccessIterator<Iter1>& x,
-                  const RandomAccessIterator<Iter1>& y) {
+  bool operator<=(const random_access_iterator<Iter1>& x,
+                  const random_access_iterator<Iter1>& y) {
     return !(y < x);
   }
 
   template <class Iter1, class Iter2>
   inline
   auto
-  operator-(const RandomAccessIterator<Iter1>& x,
-            const RandomAccessIterator<Iter2>& y)
+  operator-(const random_access_iterator<Iter1>& x,
+            const random_access_iterator<Iter2>& y)
             -> decltype(x.base() - y.base()) {
     return x.base() - y.base();
   }
 
   template <class Iter>
   inline
-  RandomAccessIterator<Iter>
-  operator+(typename RandomAccessIterator<Iter>::difference_type n,
-            RandomAccessIterator<Iter> x) {
+  random_access_iterator<Iter>
+  operator+(typename random_access_iterator<Iter>::difference_type n,
+            random_access_iterator<Iter> x) {
     x += n;
     return x;
   }

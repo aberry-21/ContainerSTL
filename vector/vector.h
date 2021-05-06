@@ -6,9 +6,9 @@
 #include <utility>
 
 #include "tools/memory.h"
-#include "vector/RandomAccessIterator.h"
-#include "tools/ReverseIterator.h"
+#include "tools/reverse_iterator.h"
 #include "tools/utility.h"
+#include "random_access_iterator.h"
 
 namespace ft {
 
@@ -24,10 +24,10 @@ namespace ft {
     typedef const value_type&                                   const_reference;
     typedef typename allocator_type::pointer                            pointer;
     typedef typename allocator_type::const_pointer                const_pointer;
-    typedef RandomAccessIterator<T>                                    iterator;
-    typedef RandomAccessIterator<const T>                        const_iterator;
-    typedef ReverseIterator<iterator>                          reverse_iterator;
-    typedef ReverseIterator<const_iterator>              const_reverse_iterator;
+    typedef ft::random_access_iterator<T>                              iterator;
+    typedef ft::random_access_iterator<const T>                  const_iterator;
+    typedef ft::reverse_iterator<iterator>                      reverse_iterator;
+    typedef ft::reverse_iterator<const_iterator>          const_reverse_iterator;
 
     explicit Vector(const allocator_type& alloc = allocator_type())
                           : array_(0), size_(0), capacity_(0), alloc_(alloc) {}
@@ -96,12 +96,13 @@ namespace ft {
     }
 
     ~Vector() {
-      if (array_){
-        for (size_type i = 0; i < size_; ++i) {
-          alloc_.template destroy(array_ + i);
-        }
-        alloc_.deallocate(array_, capacity_);
+      for (size_type i = 0; i < size_; ++i) {
+        alloc_.template destroy(array_ + i);
       }
+      alloc_.deallocate(array_, capacity_);
+      size_ = 0;
+      capacity_ = 0;
+      array_ = nullptr;
     }
 
     Vector& operator= (initializer_list<value_type> il) {
@@ -141,11 +142,10 @@ namespace ft {
     }
 
     inline
-    static size_type GetNewCapacity(const size_type old_cap,
-                                    const size_type n,
-                                    const size_type max_size) {
-      if (old_cap * 2 >= n ) {
-        size_type new_cap = old_cap * 2;
+    size_type GetNewCapacity(const size_type n,
+                             const size_type max_size) {
+      if (capacity_ * 2 >= n ) {
+        size_type new_cap = capacity_ * 2;
         if (new_cap > max_size) {
           new_cap = max_size;
         }
@@ -172,7 +172,7 @@ namespace ft {
         size_ = n;
         return;
       }
-      size_type new_cap = GetNewCapacity(capacity_, n, max_size());
+      size_type new_cap = GetNewCapacity(n, max_size());
       pointer new_array = alloc_.allocate(new_cap);
       memcpy(new_array, array_, sizeof(T) * size_);
       for (size_type i = size_; i < n; ++i) {
@@ -198,7 +198,7 @@ namespace ft {
       return (!size_);
     }
 
-    void reserve (size_type n) {
+    void reserve(size_type n) {
       if (n <= capacity_) {
         return;
       }
@@ -318,6 +318,152 @@ namespace ft {
       return rend();
     }
 
+    template <class InputIterator>
+    void assign(InputIterator first, InputIterator last) {
+      //emplace back
+    }
+
+    void ConstructObj(const pointer array,
+                      const int counter,
+                      const value_type& val) {
+      try {
+        alloc_.construct(array + counter, val);
+      } catch (...) {
+        for (size_type i = 0; i < counter; ++i) {
+          alloc_.template destroy(array + i);
+        }
+        alloc_.deallocate(array, counter);
+        throw std::bad_alloc();
+      }
+    }
+
+    void clear() noexcept {
+        for (size_type i = 0; i < size_; ++i) {
+          alloc_.destroy(array_ + i);
+        }
+      size_ = 0;
+    }
+
+    inline
+    bool compareForIdentity(const value_type& a, const value_type& b) {
+      return &a==&b;
+    }
+
+    void assign(size_type n, const value_type& val) {
+      if (n > max_size()) {
+        throw ft::Length_error("vector");
+      }
+      if (n <= capacity_) {
+        for (size_type i = 0; i < size_; ++i) {
+          if (compareForIdentity(*(array_ + i), val)) {
+            continue;
+          }
+          alloc_.template destroy(array_ + i);
+        }
+        for (size_type i = 0; i < n; ++i) {
+          ConstructObj(array_, i, val);
+        }
+        size_ = n;
+      } else {
+        pointer new_array;
+        size_type new_cap;
+        try {
+          new_cap = GetNewCapacity(n, max_size());
+          new_array = alloc_.allocate(new_cap);
+        } catch (...) {
+          throw std::bad_alloc();
+        }
+        for (size_type i = 0; i < n; ++i) {
+          ConstructObj(new_array, i, val);
+        }
+        this->~Vector();
+        array_ = new_array;
+        size_ = n;
+        capacity_ = new_cap;
+      }
+    }
+
+    void assign(initializer_list<value_type> il) {
+      if (il.size() > max_size()) {
+        throw ft::Length_error("vector");
+      }
+      if (il.size() <= capacity_) {
+        initializer_list<value_type> copy_il(il);
+        this->clear();
+        for (size_type i = 0; i < il.size(); ++i) {
+          ConstructObj(alloc_, array_, i, *(copy_il + i));
+        }
+        size_ = il.size();
+      } else {
+        pointer new_array;
+        size_type new_cap;
+        try {
+          new_cap = GetNewCapacity(il.size(), max_size());
+          new_array = alloc_.allocate(new_cap);
+        } catch (...) {
+          throw std::bad_alloc();
+        }
+        for (size_type i = 0; i < il.size(); ++i) {
+          ConstructObj(alloc_, new_array, i, *(il + i));
+        }
+        this->~Vector();
+        array_ = new_array;
+        size_ = il.size();
+        capacity_ = new_cap;
+      }
+    }
+
+    inline
+    pointer emplaceBySize(const_iterator position, size_type n) {
+      if (capacity_ >= size_ + n) {
+        // { *pos = 4, n = 3}
+        //[1 2 3 4 5 6 0 0 0 0]
+        //[1 2 3 4 5 6 4 5 6 0]
+        memcpy(position.base() + n, position.base(), sizeof(value_type) * n);
+//        size_ += n;??
+        return array_;
+      }
+      pointer new_array;
+      size_type new_cap;
+      try {
+        new_cap = GetNewCapacity(size_ + n, max_size());
+        new_array = alloc_.allocate(new_cap);
+      } catch (...) {
+        throw std::bad_alloc();
+      }
+      // { *pos = 4, n = 3}
+      //[1 2 3 4 5 0 0 0 0 0]
+      //[1 2 3 0 0 0 4 5 0 0]
+      memcpy(new_array, begin(), sizeof(value_type) * (position.base() - begin()));
+      memcpy(new_array + (position.base() - begin()) + n,
+             position.base(), sizeof(value_type) * (end() - position.base() ));
+      return new_array;
+    }
+
+    inline
+    void move_range(iterator position, size_type n);
+//    inline
+//    iterator insert(const_iterator position, const value_type& val);
+    inline
+    iterator insert(iterator position, size_type n, const value_type& val);
+//    template <class InputIterator>
+//    iterator insert(const_iterator position, InputIterator first, InputIterator last);
+//    iterator insert(const_iterator position, value_type&& val);
+//    iterator insert(const_iterator position, initializer_list<value_type> il);
+
+
+
+
+
+
+
+    template <class... Args>
+    iterator emplace(const_iterator position, Args&&... args) {
+      if (capacity_ == size_) {
+
+      }
+    }
+
    private:
     pointer          array_;
     size_type        size_;
@@ -415,6 +561,79 @@ namespace ft {
     other.capacity_ = other.size_ = 0;
     other.array_ = old_array;
     return *this;
+  }
+
+//template<class T, class Alloc>
+//typename Vector<T, Alloc>::iterator Vector<T, Alloc>::insert(
+//    Vector::const_iterator position,
+//    const value_type &val) {
+//}
+
+
+  template<class T, class Alloc>
+  typename Vector<T, Alloc>::iterator Vector<T, Alloc>::insert(
+      Vector::iterator position,
+      Vector::size_type n,
+      const value_type &val) {
+    if (size_ + n > max_size()) {
+      throw ft::Length_error("vector");
+    }
+    if (!n) {
+      return (begin());
+    }
+    if (capacity_ >= size_ + n) {
+      if (position < end()) {
+          const_reference val_copy(val);
+          move_range(position, n);
+          for (size_type i = 0; i < n; ++i, ++position) {
+            *position = val_copy;
+          }
+      } else {
+        for (size_type i = 0; i < n; ++i) {
+          alloc_.template construct(array_ + size_ + i, val);
+          }
+        size_ += n;
+      }
+      return (begin());
+    }
+    pointer new_array;
+    size_type new_cap;
+    try {
+      new_cap = GetNewCapacity(n, max_size());
+      new_array = alloc_.allocate(new_cap);
+    } catch (...) {
+      throw std::bad_alloc();
+    }
+    difference_type offset = (position - begin());
+    for (size_type i = 0; i < n; ++i) {
+      ConstructObj(new_array + offset, i, val);
+    }
+    size_type i = 0;
+    for (auto iter = begin(); iter < position; ++iter, ++i) {
+      alloc_.template construct(new_array + i, std::move_if_noexcept(*iter));
+    }
+    i += n;
+    for (auto iter = position; iter < end(); ++iter, ++i) {
+      alloc_.template construct(new_array + i, std::move_if_noexcept(*iter));
+    }
+    for (size_type i = 0; i < size_; ++i) {
+      alloc_.template destroy(array_ + i);
+    }
+    alloc_.deallocate(array_, capacity_);
+    capacity_ = new_cap;
+    size_ += n;
+    array_ = new_array;
+    return begin();
+  }
+
+  template<class T, class Alloc>
+  void Vector<T, Alloc>::move_range(iterator position, size_type n) {
+    for (size_type i = 0; i < n; ++i) {
+      alloc_.template construct(array_ + size_ + i,
+                              std::move_if_noexcept(array_[size_ + i - 1]));
+    }
+    std::move_backward(position, end() - 1, end() + n - 1);
+    size_+=n;
   }
 
 }

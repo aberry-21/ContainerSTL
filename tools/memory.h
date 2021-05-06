@@ -9,7 +9,8 @@
 
 #pragma once
 #include <new>
-#include "Exception.h"
+#include <utility>
+#include "exception.h"
 #include "tools/utility.h"
 
 namespace ft {
@@ -75,8 +76,9 @@ namespace ft {
 
   //  constructs an object in allocated storage
     template<class U, class... Args>
-    void construct(U *p, Args &&... args) {
-      new(const_cast<typename RemoveConst<T>::type*>(p)) U(args...);
+    void construct(U *p, Args&&... args) {
+      new(const_cast<
+          typename RemoveConst<T>::type*>(p)) U(std::forward<Args>(args) ...);
     }
 
   //  destructs an object in allocated storage
@@ -98,3 +100,40 @@ namespace ft {
     return !operator==<T, U>(target, other);
   }
 }
+
+
+//global op new called, size = 400
+//Create class
+//    Copy Constructor Called
+//    Copy Constructor Called
+//Copy Constructor Called
+//    Destroy class
+//    Destroy class
+//    Create class
+//    Copy Constructor Called
+//    Move Constructor Called
+//Move Constructor Called
+//    Move Constructor Called
+//Destroy class
+//    Destroy class
+//    Destroy class
+//1 1 -1 -1
+//Destroy class
+//    Destroy class
+//    Destroy class
+//    Destroy class
+//    __________________________________
+//    global op new called, size = 400
+//Create class
+//    Copy Constructor Called
+//    Copy Constructor Called
+//Destroy class
+//    Create class
+//    Copy Constructor Called
+//    Copy Constructor Called
+//Destroy class
+//1 1 -1 -1
+//Destroy class
+//    Destroy class
+//    Destroy class
+//    Destroy class
