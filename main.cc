@@ -21,12 +21,12 @@ void* operator new(std::size_t sz) // no inline, required by [replacement.functi
 
   throw std::bad_alloc{}; // required by [new.delete.single]/3
 }
-//
-//void operator delete(void* ptr) noexcept
-//{
-//  std::puts("global op delete called");
-//  std::free(ptr);
-//}
+
+void operator delete(void* ptr) noexcept
+{
+  std::puts("global op delete called");
+  std::free(ptr);
+}
 
 class MyClass {
  public:
@@ -72,37 +72,28 @@ MyClass &MyClass::operator=(MyClass &&my_class) noexcept {
   my_class.x_ = 0;
   return  *this;
 }
-//
-//void Test_ft() {
-//    ft::vector<MyClass> vector;
-//    vector.begin();
-//}
-//
-//void Test_std() {
-//    std::vector<MyClass> vector;
-//    vector.reserve(100);
-//    std::cout << "__________________________________\n";
-//    vector.insert(vector.begin(), 2, -1);
-//    std::cout << "__________________________________\n";
-//    vector.insert(vector.begin(), 2, 0);
-//    std::cout << "__________________________________\n";
-//    vector.insert(vector.begin(), 2, 1);
-//    std::cout << "__________________________________\n";
-//}
 
 int main() {
   {
-    std::vector<MyClass> vector(5, 2);
-    vector.emplace_back()
-    std::cout << "__________________________________\n";
+    std::vector<MyClass> vector(4, 0);
     vector.reserve(100);
-    std::cout << "__________________________________\n";
-    vector.shrink_to_fit();
-    std::cout << "__________________________________\n";
-    vector.resize(6);
+    std::cout << "\n_______________insert___________________\n";
+    vector.insert(vector.begin() + 2, MyClass(1));
+    std::cout << "\n______________insert____________________\n";
+    for (const auto &item : vector) {
+      std::cout << item.x_ << ' ';
+    }
   }
+  std::cout << "\n__________________________________\n";
   {
-    ft::vector<MyClass> vector;
+    ft::vector<MyClass> vector(4, 0);
+    vector.reserve(100);
+    std::cout << "\n________________insert__________________\n";
+    vector.insert(vector.begin() + 2, MyClass(1));
+    std::cout << "\n________________insert__________________\n";
+    for (const auto &item : vector) {
+      std::cout << item.x_ << ' ';
+    }
+    std::cout << "\n__________________________________\n";
   }
 }
-

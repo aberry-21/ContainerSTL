@@ -23,11 +23,16 @@ namespace ft {
     explicit random_access_iterator(pointer data)
                                               : data_(data) {}
 
-    random_access_iterator(random_access_iterator const& other)
-                                              : data_(other.data_) {}
+    random_access_iterator(random_access_iterator<value_type> const& other)
+                                              : data_(other.base()) {}
+
+    random_access_iterator(random_access_iterator<const value_type> const& other)
+        : data_(other.base()) {}
+//    random_access_iterator(random_access_iterator<RemoveConst<T>> &other)
+//                                              : data_(other.data_) {}
 
     random_access_iterator(random_access_iterator&& other) noexcept
-                                              : data_(move(other.data_)) {}
+                                              : data_(std::move(other.data_)) {}
 
     virtual ~random_access_iterator() = default;
 
