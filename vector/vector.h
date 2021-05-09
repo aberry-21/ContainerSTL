@@ -10,6 +10,7 @@
 #include "tools/utility.h"
 #include "random_access_iterator.h"
 
+using namespace std;
 namespace ft {
 
   template<class T, class Alloc = ft::Allocator<T> >
@@ -122,16 +123,17 @@ namespace ft {
     template<typename InputIterator>
     inline pointer copy_range(InputIterator first, InputIterator last,
                               typename vector<T, Alloc>::size_type cap,
-                              Alloc& alloc);
+                              const Alloc& alloc);
     template<typename InputIterator>
     inline void range_initialize(InputIterator first, InputIterator last,
-                                 Alloc& alloc);
+                                 const Alloc& alloc);
     template<class InputIt, class ForwardIt>
     inline ForwardIt uninitialized_copy(InputIt first, InputIt last,
-                                        ForwardIt d_first, Alloc& alloc);
+                                        ForwardIt d_first, const Alloc& alloc);
     template<typename InputIterator>
     inline void erase_at_end(InputIterator first, InputIterator last);
     inline void default_append(size_type append_size);
+    inline void append_end(pointer data, size_type append_size, size_type size, const value_type& value);
     template<class InputIt, class ForwardIt>
     inline ForwardIt uninitialized_move(InputIt first, InputIt last,
                                         ForwardIt d_first, size_type capacity);
@@ -160,7 +162,7 @@ namespace ft {
 
   template<class T, class Alloc>
   vector<T, Alloc>::vector(vector::size_type n) {
-    default_initialize(n);
+    fill_initialize(n, value_type());
   }
 
 // TODO перенести функцию ниже
@@ -287,8 +289,8 @@ namespace ft {
   template<typename InputIterator>
   void vector<T, Alloc>::range_initialize(InputIterator first,
                                           InputIterator last,
-                                          Alloc& alloc) {
-    const size_type n = std::distance(first, last);
+                                          const Alloc& alloc) {
+    const difference_type n = std::distance(first, last);
     default_initialize(n);
     try {
       uninitialized_copy(first, last, this->begin(), alloc);
@@ -344,7 +346,7 @@ namespace ft {
   ForwardIt vector<T, Alloc>::uninitialized_copy(InputIt first,
                                                  InputIt last,
                                                  ForwardIt d_first,
-                                                 Alloc& alloc) {
+                                                 const Alloc& alloc) {
     ForwardIt current = d_first;
     try {
       for (; first != last; ++first, ++current) {
@@ -383,7 +385,7 @@ template<class T, class Alloc>
                                        InputIterator first,
                                        InputIterator last,
                                        vector::size_type cap,
-                                       Alloc& alloc) {
+                                       const Alloc& alloc) {
     if (!cap) return nullptr;
     pointer new_data;
     try {
@@ -407,13 +409,15 @@ template<class T, class Alloc>
     if (n > max_size()) throw ft::Length_error("vector");
     if (capacity_ < n) {
       pointer old_data = data_;
+      size_type old_size = size_;
+      size_type old_capacity = capacity_;
       try {
         fill_initialize(n, val);
       } catch (...) {
         data_ = old_data;
         throw;
       }
-      destroy_storage(old_data, size_, capacity_);
+      destroy_storage(old_data, old_size, old_capacity);
       capacity_ = n;
     } else {
       this->clear();
@@ -436,13 +440,20 @@ template<class T, class Alloc>
   template<typename InputIterator>
   void vector<T, Alloc>::assign(InputIterator first, InputIterator last,
   typename enable_if< !std::numeric_limits<InputIterator>::is_specialized >::type*) {
-    const size_type n = std::distance(first, last);
+    const difference_type n = std::distance(first, last);
+    if (n < 0) {
+      this->~vector();
+      throw ft::Length_error("vector");
+    }
     if (capacity_ < n) {
       pointer new_data = copy_range(first, last, n, alloc_);
       destroy_storage(data_, size_, capacity_);
       data_ = new_data;
       capacity_ = n;
-    } else {
+    } else {//TODO
+      ft::vector<T> copy_range(first, last);
+      first = copy_range.begin();
+      last = copy_range.end();
       this->clear();
       uninitialized_copy(first, last, this->begin(), alloc_);
     }
@@ -463,7 +474,7 @@ template<class T, class Alloc>
   template<class T, class Alloc>
   typename vector<T, Alloc>::reference vector<T, Alloc>::at(vector::size_type n) {
     if (n >= size_) {
-      throw ft::OutOfRange("vector subscript out of range");
+      throw ft::OutOfRange("vector");
     }
     return data_[n];
   }
@@ -472,7 +483,7 @@ template<class T, class Alloc>
   typename vector<T, Alloc>::const_reference vector<T, Alloc>::at(
                                                     vector::size_type n) const {
     if (n >= size_) {
-      throw ft::OutOfRange("vector subscript out of range");
+      throw ft::OutOfRange("vector");
     }
     return data_[n];
   }
@@ -577,8 +588,23 @@ template<class T, class Alloc>
   }
 
   template<class T, class Alloc>
+  void vector<T, Alloc>::append_end(pointer data, size_type append_size,
+                                    size_type size,
+                                    const value_type& value) {
+    for (size_type i = 0; i < append_size; ++i) {
+      try {
+        alloc_.template construct(data + size + i, value);
+      } catch (...) {
+        clear_storage(data + size, i);
+        throw;
+      }
+    }
+  }
+
+  template<class T, class Alloc>
   void vector<T, Alloc>::default_append(vector::size_type append_size) {
     if (capacity_ >= size_ + append_size) {
+      append_end(data_, append_size, size_, value_type());
       size_ += append_size;
       return;
     }
@@ -591,6 +617,12 @@ template<class T, class Alloc>
     } catch (...) {
       throw;
     }
+    try {
+      append_end(new_data, append_size, size_, value_type());
+    } catch (...) {
+      destroy_storage(new_data, 0, new_capacity);
+      throw;
+    }
     uninitialized_move(begin(), end(), iterator(new_data), new_capacity);
     destroy_storage(data_, size_, capacity_);
     data_ = new_data;
@@ -601,14 +633,14 @@ template<class T, class Alloc>
   template<class T, class Alloc>
   typename vector<T, Alloc>::size_type vector<T, Alloc>::get_new_capacity(
                                                     vector::size_type n) {
-    if (capacity_ * 2 >= n) {
+    if (capacity_ * 2 >= capacity_ + n) {
       size_type new_cap = capacity_ * 2;
       if (new_cap > max_size()) {
         new_cap = max_size();
       }
       return (new_cap);
     }
-    return (n);
+    return (capacity_ + n);
   }
 
   template<class T, class Alloc>
@@ -844,7 +876,7 @@ template<class T, class Alloc>
                                 typename enable_if
                                     < !std::numeric_limits<InputIterator>::is_specialized >::type*) {
     pointer p = data_ + (position - begin());
-    size_type n = std::distance(first, last);
+    difference_type n = std::distance(first, last);
     if (first > last || !n) return iterator(p);
     if (size_ + n > max_size()) throw ft::Length_error("vector");
     if (capacity_ >= size_ + n) {
@@ -857,11 +889,9 @@ template<class T, class Alloc>
             throw;
           }
         }
-      } else {
-        if (&(*first) >= data_ && &(*first) < data_ + size_) {
-          vector<T> vector(first, last);
-          first = vector.begin();
-        }
+      } else {//TODO
+        vector<T> vector(first, last);
+        first = vector.begin();
         move_range(iterator(p), n);
         size_type i;
         for (i = 0; i < n; ++i, ++p, ++first) {
@@ -877,7 +907,7 @@ template<class T, class Alloc>
         try {
           alloc_.template construct(new_data + offset + i, *first);
         } catch (...) {
-          destroy_storage(new_data, i, new_cap);
+          destroy_storage(new_data + offset, i, new_cap);
           throw;
         }
       }
@@ -935,7 +965,7 @@ template<class T, class Alloc>
     if (capacity_ >= size_ + 1) {
       if (position == end()) {
         try {
-          alloc_.template construct(data_ + size_ + 1, std::forward<T>(args) ...);
+          alloc_.template construct(data_ + size_, std::forward<T>(args) ...);
         } catch (...) {
           clear_storage(data_ + size_, 1);
           throw;

@@ -23,16 +23,11 @@ namespace ft {
     explicit random_access_iterator(pointer data)
                                               : data_(data) {}
 
-    random_access_iterator(random_access_iterator<value_type> const& other)
-                                              : data_(other.base()) {}
+    random_access_iterator(random_access_iterator<value_type> const& other);
 
-    random_access_iterator(random_access_iterator<const value_type> const& other)
-        : data_(other.base()) {}
-//    random_access_iterator(random_access_iterator<RemoveConst<T>> &other)
-//                                              : data_(other.data_) {}
+    random_access_iterator(random_access_iterator<const value_type> const& other);
 
-    random_access_iterator(random_access_iterator&& other) noexcept
-                                              : data_(std::move(other.data_)) {}
+    random_access_iterator(random_access_iterator&& other) noexcept;
 
     virtual ~random_access_iterator() = default;
 
@@ -49,7 +44,7 @@ namespace ft {
         return *this;
       }
       data_ = nullptr;
-      swap(other.data_, data_);
+      std::swap(other.data_, data_);
       return *this;
     }
 
@@ -58,7 +53,7 @@ namespace ft {
     }
 
     pointer operator->() const {
-      return addressof(operator*());
+      return std::addressof(operator*());
     }
 
     random_access_iterator& operator++() {
@@ -115,7 +110,21 @@ namespace ft {
     pointer data_;
   };
 
-  template <class Iter1, class Iter2>
+  template<class T>
+  random_access_iterator<T>::random_access_iterator(const random_access_iterator<
+      value_type> &other)
+      : data_(other.base()) {}
+
+  template<class T>
+  random_access_iterator<T>::random_access_iterator(random_access_iterator &&other) noexcept
+      : data_(std::move(other.data_)) {}
+
+template<class T>
+  random_access_iterator<T>::random_access_iterator(random_access_iterator<const
+  value_type> const& other)
+      : data_(other.base()) {}
+
+template <class Iter1, class Iter2>
   inline
   bool operator==(const random_access_iterator<Iter1>& x,
                   const random_access_iterator<Iter2>& y) {
