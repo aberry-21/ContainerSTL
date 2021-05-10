@@ -147,7 +147,7 @@ namespace ft {
     pointer          data_;
     size_type        size_;
     size_type        capacity_;
-    ft::Allocator<T> alloc_;
+    allocator_type   alloc_;
 
   };
 
@@ -257,8 +257,8 @@ namespace ft {
   vector<T, Alloc>::vector(const vector &x)
                           : data_(nullptr), alloc_(x.alloc_),
                             size_(x.size_), capacity_(x.capacity_) {
-    if (!x.capacity_) return;
-    default_initialize(x.capacity_);
+    if (!x.size_) return;
+    default_initialize(x.size_);
     try {
       uninitialized_copy(x.begin(), x.end(), this->begin(), x.alloc_);
     } catch (...) {
@@ -308,7 +308,10 @@ namespace ft {
                            InputIterator last,
                            const allocator_type &a,
                            typename enable_if
-      <!std::numeric_limits<InputIterator>::is_specialized>::type*) {
+      <!std::numeric_limits<InputIterator>::is_specialized>::type*)
+      : data_(nullptr),
+        capacity_(0),
+        size_(0){
     alloc_ = a;
     range_initialize(first, last, alloc_);
   }
@@ -452,10 +455,10 @@ template<class T, class Alloc>
       capacity_ = n;
     } else {//TODO
       ft::vector<T> copy_range(first, last);
-      first = copy_range.begin();
-      last = copy_range.end();
+      auto new_first = copy_range.begin();
+      auto new_last = copy_range.end();
       this->clear();
-      uninitialized_copy(first, last, this->begin(), alloc_);
+      uninitialized_copy(new_first, new_last, this->begin(), alloc_);
     }
     size_ = n;
   }

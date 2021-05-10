@@ -1,10 +1,10 @@
-#include <utility>
-
 //
 // Created by Aaron Berry on 5/3/21.
 //
 
 #pragma once
+
+#include <utility>
 
 namespace ft {
   class Base_error : public std::exception {
@@ -27,6 +27,4 @@ namespace ft {
     explicit OutOfRange(std::string error)
     : Base_error(std::move(error)) {};
   };
-
-
 }

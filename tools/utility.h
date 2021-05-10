@@ -31,5 +31,3 @@ namespace ft {
     typedef T type;
   };
 }
-// [ 1 2 3 4 ]
-// [           9 ]

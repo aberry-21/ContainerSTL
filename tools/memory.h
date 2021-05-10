@@ -56,7 +56,7 @@ namespace ft {
     pointer allocate(size_type size,
                      Allocator<void>::const_pointer hint = nullptr) {
       if (size >= max_size()) {
-        throw ft::Length_error("allocator<const T>::allocate(size_t n) 'n'"
+        throw ft::Length_error("allocator<T>::allocate(size_t n) 'n'"
                                " exceeds maximum supported size");
       }
       pointer ptr;
@@ -76,14 +76,14 @@ namespace ft {
 
   //  constructs an object in allocated storage
     template<class U, class... Args>
-    void construct(U *p, Args&&... args) {
+    void construct(U *p, Args&&... args) const {
       new(const_cast<
           typename RemoveConst<T>::type*>(p)) U(std::forward<Args>(args) ...);
     }
 
   //  destructs an object in allocated storage
     template<class U>
-    void destroy(U *p) {
+    void destroy(U *p) const {
       p->~U();
     }
   };
