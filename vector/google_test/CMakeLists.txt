@@ -24,7 +24,7 @@ FetchContent_MakeAvailable(gtest)
 # ------------------------------------------------------------------------------
 
 
-add_executable(${PROJECT_NAME} test.cpp A.h Mallocator.h)
+add_executable(${PROJECT_NAME} test.cpp A.h)
 
 target_include_directories(${PROJECT_NAME} PUBLIC ../ , ../../)
 target_link_libraries(${PROJECT_NAME} PUBLIC gtest gtest_main)
