@@ -59,9 +59,8 @@ namespace ft {
         throw ft::Length_error("allocator<T>::allocate(size_t n) 'n'"
                                " exceeds maximum supported size");
       }
-      pointer ptr;
-        return reinterpret_cast<pointer>(
-            ::operator new(size * sizeof(value_type)));
+      return reinterpret_cast<pointer>(
+          ::operator new(size * sizeof(value_type)));
     }
 
   //  deallocates storage

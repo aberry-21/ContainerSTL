@@ -31,3 +31,5 @@ cmake-build-debug
 *.exe
 *.out
 *.app
+.idea
+.DS_Store

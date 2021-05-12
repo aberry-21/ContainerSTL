@@ -230,7 +230,8 @@ namespace ft {
 
   template<class T, class Alloc>
   typename vector<T, Alloc>::size_type vector<T, Alloc>::max_size() const noexcept {
-    return alloc_.max_size();
+    return std::min<size_type>(alloc_.max_size(),
+                                 numeric_limits<difference_type>::max());
   }
 
   template<class T, class Alloc>
@@ -366,13 +367,13 @@ namespace ft {
 
   template<class T, class Alloc>
   vector<T, Alloc> &vector<T, Alloc>::operator=(vector &&x) noexcept {
-    pointer old_data = data_;
+    this->~vector();
     size_ = x.size_;
     capacity_ = x.capacity_;
     alloc_ = x.alloc_;
     data_ = x.data_;
     x.capacity_ = x.size_ = 0;
-    x.data_ = old_data;
+    x.data_ = nullptr;
     return *this;
   }
 
@@ -584,6 +585,7 @@ template<class T, class Alloc>
 
   template<class T, class Alloc>
   void vector<T, Alloc>::resize(vector::size_type new_size) {
+    if (new_size > max_size()) throw ft::Length_error("vector");
     if (new_size > size_)
       default_append(new_size - size_);
     else if (new_size < size_)
@@ -636,14 +638,14 @@ template<class T, class Alloc>
   template<class T, class Alloc>
   typename vector<T, Alloc>::size_type vector<T, Alloc>::get_new_capacity(
                                                     vector::size_type n) {
-    if (capacity_ * 2 >= capacity_ + n) {
+    if (capacity_ * 2 >= size_ + n) {//?
       size_type new_cap = capacity_ * 2;
       if (new_cap > max_size()) {
         new_cap = max_size();
       }
       return (new_cap);
     }
-    return (capacity_ + n);
+    return (size_ + n);
   }
 
   template<class T, class Alloc>
@@ -880,7 +882,7 @@ template<class T, class Alloc>
                                     < !std::numeric_limits<InputIterator>::is_specialized >::type*) {
     pointer p = data_ + (position - begin());
     difference_type n = std::distance(first, last);
-    if (first > last || !n) return iterator(p);
+    if (!n) return iterator(p);
     if (size_ + n > max_size()) throw ft::Length_error("vector");
     if (capacity_ >= size_ + n) {
       if (position == end()) {
@@ -894,11 +896,11 @@ template<class T, class Alloc>
         }
       } else {//TODO
         vector<T> vector(first, last);
-        first = vector.begin();
+        auto new_first = vector.begin();
         move_range(iterator(p), n);
         size_type i;
-        for (i = 0; i < n; ++i, ++p, ++first) {
-          *p = *first;
+        for (i = 0; i < n; ++i, ++p, ++new_first) {
+          *p = *new_first;
         }
         p-=i;
       }
@@ -968,13 +970,13 @@ template<class T, class Alloc>
     if (capacity_ >= size_ + 1) {
       if (position == end()) {
         try {
-          alloc_.template construct(data_ + size_, std::forward<T>(args) ...);
+          alloc_.template construct(data_ + size_, std::forward<Args>(args) ...);
         } catch (...) {
           clear_storage(data_ + size_, 1);
           throw;
         }
       } else {
-        const_reference val_copy(args ...);
+        value_type val_copy(args ...);
         move_range(iterator(p), 1);
         *p = val_copy;
         --p;
@@ -984,7 +986,7 @@ template<class T, class Alloc>
       size_type new_cap = get_new_capacity(1);
       pointer new_data = alloc_.allocate(new_cap);
       try {
-        alloc_.template construct(new_data + offset, std::forward<T>(args) ...);
+        alloc_.template construct(new_data + offset, std::forward<Args>(args) ...);
       } catch (...) {
         destroy_storage(new_data, 1, new_cap);
         throw;
@@ -1007,14 +1009,75 @@ template<class T, class Alloc>
   template<class T, class Alloc>
   template<typename... Args>
   void vector<T, Alloc>::emplace_back(Args &&... args) {
-    emplace(end(), std::forward<T>(args) ...);
+    emplace(end(), std::forward<Args>(args) ...);
   }
 
   template<class T, class Alloc>
   typename vector<T, Alloc>::iterator vector<T, Alloc>::insert(
                                             vector::const_iterator position,
                                             value_type &&x) {
-    return emplace(position, std::forward<T>(x));
+    return emplace(position, std::forward<value_type>(x));
+  }
+//not my
+  template <class T, class Alloc>
+  bool operator==(const vector<T,Alloc>& lhs, const vector<T,Alloc>& rhs) {
+    return
+        (
+            lhs.size() == rhs.size() &&
+                std::equal(lhs.begin(), lhs.end(), rhs.begin())
+        );
   }
 
+  template <class T, class Alloc>
+  bool operator!=(const vector<T,Alloc>& lhs, const vector<T,Alloc>& rhs) {
+    return
+        !(
+            lhs.size() == rhs.size() &&
+                std::equal(lhs.begin(), lhs.end(), rhs.begin())
+        );
+  }
+
+  template <class T, class Alloc>
+  bool operator<(const vector<T,Alloc>& lhs, const vector<T,Alloc>& rhs) {
+    return std::lexicographical_compare
+        (
+            lhs.begin(),
+            lhs.end(),
+            rhs.begin(),
+            rhs.end()
+        );
+  }
+
+  template <class T, class Alloc>
+  bool operator<=(const vector<T,Alloc>& lhs, const vector<T,Alloc>& rhs) {
+    return !std::lexicographical_compare
+        (
+            rhs.begin(),
+            rhs.end(),
+            lhs.begin(),
+            lhs.end()
+        );
+  }
+
+  template <class T, class Alloc>
+  bool operator>(const vector<T,Alloc>& lhs, const vector<T,Alloc>& rhs) {
+    return std::lexicographical_compare
+        (
+            rhs.begin(),
+            rhs.end(),
+            lhs.begin(),
+            lhs.end()
+        );
+  }
+
+  template <class T, class Alloc>
+  bool operator>=(const vector<T,Alloc>& lhs, const vector<T,Alloc>& rhs) {
+    return !std::lexicographical_compare
+        (
+            lhs.begin(),
+            lhs.end(),
+            rhs.begin(),
+            rhs.end()
+        );
+  }
 }

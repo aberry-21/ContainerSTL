@@ -14,7 +14,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -g")
 
 set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
 
-#aux_source_directory(tools DIR_SRCS)
 add_executable(${PROJECT_NAME} tools/memory.h tools/exception.h tools/profile.h
                                 main.cc vector/vector.h vector/random_access_iterator.h tools/utility.h tools/reverse_iterator.h)
 

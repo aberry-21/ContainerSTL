@@ -9,7 +9,7 @@ add_compile_options(
 #        -Wall
 #        -Wextra
 )
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -g")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -g")
 
 # gTest ------------------------------------------------------------------------
 
@@ -24,7 +24,7 @@ FetchContent_MakeAvailable(gtest)
 # ------------------------------------------------------------------------------
 
 
-add_executable(${PROJECT_NAME} test.cpp A.h)
+add_executable(${PROJECT_NAME} src/test.cpp includes/A.h)
 
-target_include_directories(${PROJECT_NAME} PUBLIC ../ , ../../)
+target_include_directories(${PROJECT_NAME} PUBLIC ../ , ../../ , .)
 target_link_libraries(${PROJECT_NAME} PUBLIC gtest gtest_main)

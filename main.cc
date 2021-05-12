@@ -9,7 +9,7 @@
 #include "tools/profile.h"
 #include "vector/vector.h"
 #include "vector/random_access_iterator.h"
-
+#include "vector/test.hpp"
 void* operator new(std::size_t sz) // no inline, required by [replacement.functions]/3
 {
   std::printf("global op new called, size = %zu\n", sz);
@@ -73,27 +73,25 @@ MyClass &MyClass::operator=(MyClass &&my_class) noexcept {
   return  *this;
 }
 
+void ft_erase_2540_leaks_test() {
+  std::cout << "erase_2540_leaks_test" << std::endl;
+  std::vector<Test> mouse(129);
+  for (size_t i = 0; i < mouse.size(); ++i) {
+    mouse[i].some_ = i;
+  }
+  std::vector<Test> big_mouse(1023);
+  for (size_t i = 0; i < big_mouse.size(); ++i) {
+    big_mouse[i].some_ = i + 1000;
+  }
+
+  std::cout << mouse.erase(mouse.begin())->some_ << std::endl;
+  std::cout << "size    : " << mouse.size()     << std::endl;
+  std::cout << "capacity: " << mouse.capacity() << std::endl;
+}
+
 int main() {
   {
-    std::vector<MyClass> vector(4, 0);
-    vector.reserve(100);
-    std::cout << "\n_______________insert___________________\n";
-    vector.insert(vector.begin() + 2, MyClass(1));
-    std::cout << "\n______________insert____________________\n";
-    for (const auto &item : vector) {
-      std::cout << item.x_ << ' ';
-    }
-  }
-  std::cout << "\n__________________________________\n";
-  {
-    ft::vector<MyClass> vector(4, 0);
-    vector.reserve(100);
-    std::cout << "\n________________insert__________________\n";
-    vector.insert(vector.begin() + 2, MyClass(1));
-    std::cout << "\n________________insert__________________\n";
-    for (const auto &item : vector) {
-      std::cout << item.x_ << ' ';
-    }
-    std::cout << "\n__________________________________\n";
+    ft_erase_2540_leaks_test();
+    std::cout << "______________________________________" << std::endl;
   }
 }
