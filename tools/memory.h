@@ -56,7 +56,7 @@ namespace ft {
     pointer allocate(size_type size,
                      Allocator<void>::const_pointer hint = nullptr) {
       if (size >= max_size()) {
-        throw ft::Length_error("allocator<T>::allocate(size_t n) 'n'"
+        throw ft::length_error("allocator<T>::allocate(size_t n) 'n'"
                                " exceeds maximum supported size");
       }
       return reinterpret_cast<pointer>(

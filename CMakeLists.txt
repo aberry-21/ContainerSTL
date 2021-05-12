@@ -10,11 +10,19 @@ add_compile_options(
 #    -Wextra
 )
 
+include(FetchContent)
+FetchContent_Declare(gtest
+    QUIET
+    URL https://github.com/google/googletest/archive/release-1.10.0.tar.gz
+    )
+FetchContent_MakeAvailable(gtest)
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -g")
 
 set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
 
-add_executable(${PROJECT_NAME} tools/memory.h tools/exception.h tools/profile.h
+add_executable(${PROJECT_NAME} vector/google_test/src/test.cpp tools/memory.h tools/exception.h tools/profile.h
                                 main.cc vector/vector.h vector/random_access_iterator.h tools/utility.h tools/reverse_iterator.h)
 
 target_include_directories(${PROJECT_NAME} PUBLIC .)
+target_link_libraries(${PROJECT_NAME} PUBLIC gtest gtest_main)

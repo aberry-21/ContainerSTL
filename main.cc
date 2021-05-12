@@ -9,7 +9,6 @@
 #include "tools/profile.h"
 #include "vector/vector.h"
 #include "vector/random_access_iterator.h"
-#include "vector/test.hpp"
 void* operator new(std::size_t sz) // no inline, required by [replacement.functions]/3
 {
   std::printf("global op new called, size = %zu\n", sz);
@@ -73,25 +72,8 @@ MyClass &MyClass::operator=(MyClass &&my_class) noexcept {
   return  *this;
 }
 
-void ft_erase_2540_leaks_test() {
-  std::cout << "erase_2540_leaks_test" << std::endl;
-  std::vector<Test> mouse(129);
-  for (size_t i = 0; i < mouse.size(); ++i) {
-    mouse[i].some_ = i;
-  }
-  std::vector<Test> big_mouse(1023);
-  for (size_t i = 0; i < big_mouse.size(); ++i) {
-    big_mouse[i].some_ = i + 1000;
-  }
-
-  std::cout << mouse.erase(mouse.begin())->some_ << std::endl;
-  std::cout << "size    : " << mouse.size()     << std::endl;
-  std::cout << "capacity: " << mouse.capacity() << std::endl;
-}
-
 int main() {
   {
-    ft_erase_2540_leaks_test();
     std::cout << "______________________________________" << std::endl;
   }
 }
