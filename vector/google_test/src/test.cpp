@@ -305,166 +305,178 @@ TEST(vector, iterator_constructor) {
 //// =============================== ASSIGN ======================================
 //
 //// -----------------------Assigns a given value to a vector.--------------------
-//template<class T>
-//void assign_value(int count, const T value) {
-//  // capacity < count
-//  {
-//    stl::_vector<T> stl_vector(0, value);
-//    my::vector_<T> my_vector(0, value);
-//    compare_vector<T>(my_vector, stl_vector);
-//    stl_vector.assign(count, value);
-//    my_vector.assign(count, value);
-//    compare_vector<T>(my_vector, stl_vector);
-//  }
-//  // capacity >= count
-//  {
-//    stl::_vector<T> stl_vector(20000, value);
-//    my::vector_<T> my_vector(20000, value);
-//    compare_vector<T>(my_vector, stl_vector);
-//    stl_vector.assign(count, value);
-//    my_vector.assign(count, value);
-//    compare_vector<T>(my_vector, stl_vector);
-//  }
-//}
-//
-//TEST(vector, assign_value) {
-//  assign_value<A>(13000, 4);
-//  assign_value<int>(13, 4);
-//  assign_value<char>(12, 2);
-//  assign_value<std::string>(10, std::string("vector"));
-//}
+template<class T>
+void assign_value(int count, const T value) {
+  // capacity < count
+  {
+    stl::_vector<T> stl_vector(0, value);
+    my::vector_<T> my_vector(0, value);
+    compare_vector<T>(my_vector, stl_vector);
+    stl_vector.assign(count, value);
+    my_vector.assign(count, value);
+    compare_vector<T>(my_vector, stl_vector);
+  }
+  // capacity >= count
+  {
+    stl::_vector<T> stl_vector(20000, value);
+    my::vector_<T> my_vector(20000, value);
+    compare_vector<T>(my_vector, stl_vector);
+    stl_vector.assign(count, value);
+    my_vector.assign(count, value);
+    compare_vector<T>(my_vector, stl_vector);
+  }
+}
+
+TEST(vector, assign_value) {
+  my::vector_<int> my_vector(10, 1);
+  stl::_vector<int> stl_vector(10, 1);
+  try {
+    my_vector.assign(-1, 1);
+  } catch (std::exception const &ex) {
+    EXPECT_EQ(ex.what(), std::string("vector"));
+  }
+  try {
+    stl_vector.assign(-1, 1);
+  } catch (std::exception const &ex) {
+    EXPECT_EQ(ex.what(), std::string("vector"));
+  }
+  assign_value<A>(13000, 4);
+  assign_value<int>(13, 4);
+  assign_value<char>(12, 2);
+  assign_value<std::string>(10, std::string("vector"));
+}
 //// -----------------------------------------------------------------------------
 //
 //// ----------------------Assigns a range to a vector.---------------------------
-//template<class T>
-//void assign_range_test(my::vector_<T> &my_vector, stl::_vector<T> &stl_vector,
-//                       const T value) {
-//  // self
-//  {
-//    stl_vector.assign(stl_vector.begin() + 2, stl_vector.end());
-//    my_vector.assign(my_vector.begin() + 2, my_vector.end());
-//    compare_vector<T>(my_vector, stl_vector);
-//  }
-//  // other vector
-//  {
-//    stl::_vector<T> copy_stl(stl_vector);
-//    my::vector_<T> copy_my(my_vector);
-//    compare_vector<T>(my_vector, stl_vector);
-//    compare_vector<T>(copy_my, copy_stl);
-//    stl_vector.assign(copy_stl.begin() + 2, copy_stl.end());
-//    my_vector.assign(copy_stl.begin() + 2, copy_stl.end());
-//    compare_vector<T>(my_vector, stl_vector);
-//    stl_vector.assign(copy_my.begin() + 2, copy_my.end());
-//    my_vector.assign(copy_my.begin() + 2, copy_my.end());
-//    compare_vector<T>(my_vector, stl_vector);
-//  }
-//  // list
-//  {
-//    std::list<T> lst(10, value);
-//    stl_vector.assign(++lst.begin(), lst.end());
-//    my_vector.assign(++lst.begin(), lst.end());
-//    compare_vector<T>(my_vector, stl_vector);
-//  }
-//  // all self
-//  {
-//    stl_vector.assign(stl_vector.begin(), stl_vector.begin());
-//    my_vector.assign(my_vector.begin(), my_vector.begin());
-//    compare_vector<T>(my_vector, stl_vector);
-//  }
-//  // first==last
-//  {
-//    stl_vector.assign(stl_vector.begin(), stl_vector.begin());
-//    my_vector.assign(my_vector.end(), my_vector.end());
-//    compare_vector<T>(my_vector, stl_vector);
-//  }
-//  {
-//    stl_vector.assign(stl_vector.rbegin(), stl_vector.rend());
-//    my_vector.assign(my_vector.rbegin(), my_vector.rend());
-//    compare_vector<T>(my_vector, stl_vector);
-//  }
-//}
-//
-//template<class T, typename InputIterator>
-//void assign_range_ex(const T value, InputIterator first, InputIterator last) {
-//  my::vector_<T> my_vector(10, value);
-//  stl::_vector<T> stl_vector(10, value);
-//  try {
-//    my_vector.assign(first, last);
-//  } catch (std::exception const &ex) {
-//    EXPECT_EQ(ex.what(), std::string("vector"));
-//  }
-//  try {
-//    stl_vector.assign(first, last);
-//  } catch (std::exception const &ex) {
-//    EXPECT_EQ(ex.what(), std::string("vector"));
-//  }
-//  compare_vector<T>(my_vector, stl_vector);
-//}
-//
-//template<class T>
-//void assign_range(const T value) {
-//  // ex test
-//  {
-//    stl::_vector<T> stl_vector(100, value);
-//    my::vector_<T> my_vector(100, value);
-//    assign_range_ex(value, stl_vector.rbegin(), stl_vector.rend());
-//    assign_range_ex(value, stl_vector.begin(), stl_vector.end());
-//    assign_range_ex(value, stl_vector.rend(), stl_vector.rbegin());
-//    assign_range_ex(value, stl_vector.end(), stl_vector.begin());
-//    assign_range_ex(value, my_vector.rbegin(), my_vector.rend());
-//    assign_range_ex(value, my_vector.begin(), my_vector.end());
-//    assign_range_ex(value, my_vector.rend(), my_vector.rbegin());
-//    assign_range_ex(value, my_vector.end(), my_vector.begin());
-//  }
-//  // capacity < count
-//  {
-//    stl::_vector<T> stl_vector(5, value);
-//    my::vector_<T> my_vector(5, value);
-//    assign_range_test<T>(my_vector, stl_vector, value);
-//  }
-//  // capacity >= count
-//  {
-//    stl::_vector<T> stl_vector(20000, value);
-//    my::vector_<T> my_vector(20000, value);
-//    assign_range_test<T>(my_vector, stl_vector, value);
-//  }
-//}
-//
-//TEST(vector, assign_range) {
+template<class T>
+void assign_range_test(my::vector_<T> &my_vector, stl::_vector<T> &stl_vector,
+                       const T value) {
+  // self
+  {
+    stl_vector.assign(stl_vector.begin() + 2, stl_vector.end());
+    my_vector.assign(my_vector.begin() + 2, my_vector.end());
+    compare_vector<T>(my_vector, stl_vector);
+  }
+  // other vector
+  {
+    stl::_vector<T> copy_stl(stl_vector);
+    my::vector_<T> copy_my(my_vector);
+    compare_vector<T>(my_vector, stl_vector);
+    compare_vector<T>(copy_my, copy_stl);
+    stl_vector.assign(copy_stl.begin() + 2, copy_stl.end());
+    my_vector.assign(copy_stl.begin() + 2, copy_stl.end());
+    compare_vector<T>(my_vector, stl_vector);
+    stl_vector.assign(copy_my.begin() + 2, copy_my.end());
+    my_vector.assign(copy_my.begin() + 2, copy_my.end());
+    compare_vector<T>(my_vector, stl_vector);
+  }
+  // list
+  {
+    std::list<T> lst(10, value);
+    stl_vector.assign(++lst.begin(), lst.end());
+    my_vector.assign(++lst.begin(), lst.end());
+    compare_vector<T>(my_vector, stl_vector);
+  }
+  // all self
+  {
+    stl_vector.assign(stl_vector.begin(), stl_vector.begin());
+    my_vector.assign(my_vector.begin(), my_vector.begin());
+    compare_vector<T>(my_vector, stl_vector);
+  }
+  // first==last
+  {
+    stl_vector.assign(stl_vector.begin(), stl_vector.begin());
+    my_vector.assign(my_vector.end(), my_vector.end());
+    compare_vector<T>(my_vector, stl_vector);
+  }
+  {
+    stl_vector.assign(stl_vector.rbegin(), stl_vector.rend());
+    my_vector.assign(my_vector.rbegin(), my_vector.rend());
+    compare_vector<T>(my_vector, stl_vector);
+  }
+}
+
+template<class T, typename InputIterator>
+void assign_range_ex(const T value, InputIterator first, InputIterator last) {
+  my::vector_<T> my_vector(10, value);
+  stl::_vector<T> stl_vector(10, value);
+  try {
+    my_vector.assign(first, last);
+  } catch (std::exception const &ex) {
+    EXPECT_EQ(ex.what(), std::string("vector"));
+  }
+  try {
+    stl_vector.assign(first, last);
+  } catch (std::exception const &ex) {
+    EXPECT_EQ(ex.what(), std::string("vector"));
+  }
+  compare_vector<T>(my_vector, stl_vector);
+}
+
+template<class T>
+void assign_range(const T value) {
+  // ex test
+  {
+    stl::_vector<T> stl_vector(100, value);
+    my::vector_<T> my_vector(100, value);
+    assign_range_ex(value, stl_vector.rbegin(), stl_vector.rend());
+    assign_range_ex(value, stl_vector.begin(), stl_vector.end());
+    assign_range_ex(value, stl_vector.rend(), stl_vector.rbegin());
+    assign_range_ex(value, stl_vector.end(), stl_vector.begin());
+    assign_range_ex(value, my_vector.rbegin(), my_vector.rend());
+    assign_range_ex(value, my_vector.begin(), my_vector.end());
+    assign_range_ex(value, my_vector.rend(), my_vector.rbegin());
+    assign_range_ex(value, my_vector.end(), my_vector.begin());
+  }
+  // capacity < count
+  {
+    stl::_vector<T> stl_vector(5, value);
+    my::vector_<T> my_vector(5, value);
+    assign_range_test<T>(my_vector, stl_vector, value);
+  }
+  // capacity >= count
+  {
+    stl::_vector<T> stl_vector(20000, value);
+    my::vector_<T> my_vector(20000, value);
+    assign_range_test<T>(my_vector, stl_vector, value);
+  }
+}
+
+TEST(vector, assign_range) {
 //  assign_range<A>(4);
-//  assign_range<int>(4);
+  assign_range<int>(4);
 //  assign_range<char>(2);
 //  assign_range<std::string>(std::string("vector"));
-//}
-//// -----------------------------------------------------------------------------
-//
-//// --------------------Assigns an initializer list to a vector.-----------------
-//template<class T>
-//void assign_initializer_list(const T value, initializer_list<T> l) {
-//  // capacity < count
-//  {
-//    stl::_vector<T> stl_vector(5, value);
-//    my::vector_<T> my_vector(5, value);
-//    stl_vector.assign(l);
-//    my_vector.assign(l);
-//    compare_vector<T>(my_vector, stl_vector);
-//  }
-//  // capacity >= count
-//  {
-//    stl::_vector<T> stl_vector(20000, value);
-//    my::vector_<T> my_vector(20000, value);
-//    stl_vector.assign(l);
-//    my_vector.assign(l);
-//    compare_vector<T>(my_vector, stl_vector);
-//  }
-//}
-//
-//TEST(vector, assign_initializer_list) {
-//  assign_initializer_list<A>(4, {A(1), A(2)});
-//  assign_initializer_list<int>(4, {1, 2});
-//  assign_initializer_list<char>(2, {1, 2});
-//  assign_initializer_list<std::string>(std::string("vector"), {"a", "b"});
-//}
+}
+// -----------------------------------------------------------------------------
+
+// --------------------Assigns an initializer list to a vector.-----------------
+template<class T>
+void assign_initializer_list(const T value, std::initializer_list<T> l) {
+  // capacity < count
+  {
+    stl::_vector<T> stl_vector(5, value);
+    my::vector_<T> my_vector(5, value);
+    stl_vector.assign(l);
+    my_vector.assign(l);
+    compare_vector<T>(my_vector, stl_vector);
+  }
+  // capacity >= count
+  {
+    stl::_vector<T> stl_vector(20000, value);
+    my::vector_<T> my_vector(20000, value);
+    stl_vector.assign(l);
+    my_vector.assign(l);
+    compare_vector<T>(my_vector, stl_vector);
+  }
+}
+
+TEST(vector, assign_initializer_list) {
+  assign_initializer_list<A>(4, {A(1), A(2)});
+  assign_initializer_list<int>(4, {1, 2});
+  assign_initializer_list<char>(2, {1, 2});
+  assign_initializer_list<std::string>(std::string("vector"), {"a", "b"});
+}
 //// -----------------------------------------------------------------------------
 //
 //// ================================ AT =========================================
@@ -1178,42 +1190,42 @@ TEST(vector, iterator_constructor) {
 //// ============================ OPERATOR= ======================================
 //
 //// -----------------------------------------------------------------------------
-//template<class T>
-//void operator_assignment(const T value_1, const T value_2) {
-//  // Vector assignment operator.
-//  // capacity >= other capacity
-//  {
-//    stl::_vector<T> stl_vector_1(10, value_1);
-//    my::vector_<T> my_vector_1(10, value_1);
-//    stl::_vector<T> stl_vector_2(15, value_2);
-//    my::vector_<T> my_vector_2(15, value_2);
-//    stl_vector_2 = stl_vector_1;
-//    my_vector_2 = my_vector_1;
-//    compare_vector<T>(my_vector_2, stl_vector_2);
-//    compare_vector<T>(my_vector_1, stl_vector_1);
-//  }
-//  // capacity < other capacity
-//  {
-//    stl::_vector<T> stl_vector_1(20, value_1);
-//    my::vector_<T> my_vector_1(20, value_1);
-//    stl::_vector<T> stl_vector_2(15, value_2);
-//    my::vector_<T> my_vector_2(15, value_2);
-//    stl_vector_2 = stl_vector_1;
-//    my_vector_2 = my_vector_1;
-//    compare_vector<T>(my_vector_2, stl_vector_2);
-//    compare_vector<T>(my_vector_1, stl_vector_1);
-//  }
-//  // Vector move assignment operator.
-//  {
-//    stl::_vector<T> stl_vector_1(10, value_1);
-//    my::vector_<T> my_vector_1(10, value_1);
-//    stl::_vector<T> stl_vector_2(15, value_2);
-//    my::vector_<T> my_vector_2(15, value_2);
-//    stl_vector_2 = std::move(stl_vector_1);
-//    my_vector_2 = std::move(my_vector_1);
-//    compare_vector<T>(my_vector_2, stl_vector_2);
-//    compare_vector<T>(my_vector_1, stl_vector_1);
-//  }
+template<class T>
+void operator_assignment(const T value_1, const T value_2) {
+  // Vector assignment operator.
+  // capacity >= other capacity
+  {
+    stl::_vector<T> stl_vector_1(10, value_1);
+    my::vector_<T> my_vector_1(10, value_1);
+    stl::_vector<T> stl_vector_2(15, value_2);
+    my::vector_<T> my_vector_2(15, value_2);
+    stl_vector_2 = stl_vector_1;
+    my_vector_2 = my_vector_1;
+    compare_vector<T>(my_vector_2, stl_vector_2);
+    compare_vector<T>(my_vector_1, stl_vector_1);
+  }
+  // capacity < other capacity
+  {
+    stl::_vector<T> stl_vector_1(20, value_1);
+    my::vector_<T> my_vector_1(20, value_1);
+    stl::_vector<T> stl_vector_2(15, value_2);
+    my::vector_<T> my_vector_2(15, value_2);
+    stl_vector_2 = stl_vector_1;
+    my_vector_2 = my_vector_1;
+    compare_vector<T>(my_vector_2, stl_vector_2);
+    compare_vector<T>(my_vector_1, stl_vector_1);
+  }
+  // Vector move assignment operator.
+  {
+    stl::_vector<T> stl_vector_1(10, value_1);
+    my::vector_<T> my_vector_1(10, value_1);
+    stl::_vector<T> stl_vector_2(15, value_2);
+    my::vector_<T> my_vector_2(15, value_2);
+    stl_vector_2 = std::move(stl_vector_1);
+    my_vector_2 = std::move(my_vector_1);
+    compare_vector<T>(my_vector_2, stl_vector_2);
+    compare_vector<T>(my_vector_1, stl_vector_1);
+  }
 //  //Vector list assignment operator.
 //  {
 //    stl::_vector<T> stl_vector_1(10, value_1);
@@ -1225,14 +1237,14 @@ TEST(vector, iterator_constructor) {
 //    my_vector_1 = {};
 //    compare_vector<T>(my_vector_1, stl_vector_1);
 //  }
-//}
-//
-//TEST(vector, operator_assignment) {
-//  operator_assignment<A>(1, -1);
-//  operator_assignment<int>(2, -2);
-//  operator_assignment<char>(3, 2);
-//  operator_assignment<std::string>(std::string("42"), std::string("21"));
-//}
+}
+
+TEST(vector, operator_assignment) {
+  operator_assignment<A>(1, -1);
+  operator_assignment<int>(2, -2);
+  operator_assignment<char>(3, 2);
+  operator_assignment<std::string>(std::string("42"), std::string("21"));
+}
 //// -----------------------------------------------------------------------------
 //
 //// ============================ POP_BACK =======================================
@@ -1439,81 +1451,81 @@ TEST(vector, iterator_constructor) {
 //// ============================= RESERVE =======================================
 //
 //// ----Attempt to preallocate enough memory for specified number of elements.---
-//template<class T>
-//void reserve(int size, const T value) {
-//  stl::_vector<T> stl_vector(size, value);
-//  my::vector_<T> my_vector(size, value);
-//  // reserve n > capacity
-//  stl_vector.reserve(1000);
-//  my_vector.reserve(1000);
-//  compare_vector<T>(my_vector, stl_vector);
-//  // reserve n < capacity
-//  stl_vector.reserve(1);
-//  my_vector.reserve(1);
-//  compare_vector<T>(my_vector, stl_vector);
-//}
-//
-//TEST(vector, reserve) {
-//  stl::_vector<int> stl_vector(2, 0);
-//  my::vector_<int> my_vector(2, 0);
-//  // reserve n < 0
-//  try {
-//    stl_vector.reserve(-1);
-//  } catch (std::exception const &ex) {
-//    EXPECT_EQ(ex.what(),std::string(
-//        "allocator<T>::allocate(size_t n) 'n' exceeds maximum supported size"));
-//  }
-//  try {
-//    my_vector.reserve(-1);
-//  } catch (std::exception const &ex) {
-//    EXPECT_EQ(ex.what(),std::string(
-//        "allocator<T>::allocate(size_t n) 'n' exceeds maximum supported size"));
-//  }
-//  compare_vector<int>(my_vector, stl_vector);
-//  reserve<A>(100, 2);
+template<class T>
+void reserve(int size, const T value) {
+  stl::_vector<T> stl_vector(size, value);
+  my::vector_<T> my_vector(size, value);
+  // reserve n > capacity
+  stl_vector.reserve(1000);
+  my_vector.reserve(1000);
+  compare_vector<T>(my_vector, stl_vector);
+  // reserve n < capacity
+  stl_vector.reserve(1);
+  my_vector.reserve(1);
+  compare_vector<T>(my_vector, stl_vector);
+}
+
+TEST(vector, reserve) {
+  stl::_vector<int> stl_vector(2, 0);
+  my::vector_<int> my_vector(2, 0);
+  // reserve n < 0
+  try {
+    stl_vector.reserve(-1);
+  } catch (std::exception const &ex) {
+    EXPECT_EQ(ex.what(),std::string(
+        "allocator<T>::allocate(size_t n) 'n' exceeds maximum supported size"));
+  }
+  try {
+    my_vector.reserve(-1);
+  } catch (std::exception const &ex) {
+    EXPECT_EQ(ex.what(),std::string(
+        "allocator<T>::allocate(size_t n) 'n' exceeds maximum supported size"));
+  }
+  compare_vector<int>(my_vector, stl_vector);
+  reserve<A>(100, 2);
 //  reserve<int>(200, 2);
 //  reserve<char>(30, 2);
 //  reserve<std::string>(1, std::string("42"));
-//}
+}
 //// -----------------------------------------------------------------------------
 //
 //// ============================= RESIZE ========================================
 //
 //// -------Resizes the vector to the specified number of elements.---------------
-//template<class T>
-//void resize(int size, const T value) {
-//  stl::_vector<T> stl_vector(size, value);
-//  my::vector_<T> my_vector(size, value);
-//  // resize n > size
-//  stl_vector.resize(1000);
-//  my_vector.resize(1000);
-//  compare_vector<T>(my_vector, stl_vector);
-//  // resize n < size
-//  stl_vector.resize(1);
-//  my_vector.resize(1);
-//  compare_vector<T>(my_vector, stl_vector);
-//}
-//
-//TEST(vector, resize) {
-//  stl::_vector<int> stl_vector(2, 0);
-//  my::vector_<int> my_vector(2, 0);
-//  // resize n < 0
-//  try {
-//    stl_vector.resize(-1);
-//  } catch (std::exception const &ex) {
-//    EXPECT_EQ(ex.what(),std::string("vector"));
-//  }
-//  try {
-//    my_vector.resize(-1);
-//  } catch (std::exception const &ex) {
-//    EXPECT_EQ(ex.what(),std::string("vector"));
-//  }
-//  compare_vector<int>(my_vector, stl_vector);
-//  resize<A>(100, 2);
-//  resize<int>(200, 2);
-//  resize<char>(30, 2);
-//  resize<std::string>(1, std::string("42"));
-//}
+template<class T>
+void resize(int size, const T value) {
+  stl::_vector<T> stl_vector(size, value);
+  my::vector_<T> my_vector(size, value);
+  // resize n > size
+  stl_vector.resize(1000);
+  my_vector.resize(1000);
+  compare_vector<T>(my_vector, stl_vector);
+  // resize n < size
+  stl_vector.resize(1);
+  my_vector.resize(1);
+  compare_vector<T>(my_vector, stl_vector);
+}
+
+TEST(vector, resize) {
+  stl::_vector<int> stl_vector(2, 0);
+  my::vector_<int> my_vector(2, 0);
+  // resize n < 0
+  try {
+    stl_vector.resize(-1);
+  } catch (std::exception const &ex) {
+    EXPECT_EQ(ex.what(),std::string("vector"));
+  }
+  try {
+    my_vector.resize(-1);
+  } catch (std::exception const &ex) {
+    EXPECT_EQ(ex.what(),std::string("vector"));
+  }
+  compare_vector<int>(my_vector, stl_vector);
+  resize<A>(100, 2);
+  resize<int>(200, 2);
+  resize<char>(30, 2);
+  resize<std::string>(1, std::string("42"));
+}
 //// -----------------------------------------------------------------------------
 //
 //// ---Resizes the vector with value to the specified number of elements.--------
@@ -1570,22 +1582,24 @@ TEST(vector, iterator_constructor) {
 //// =========================== SHRINK_TO_FIT ===================================
 //
 //// --------A non-binding request to reduce capacity() to size().----------------
-//template<class T>
-//void shrink_to_fit(int size, const T value) {
-//  stl::_vector<T> stl_vector(size, value);
-//  my::vector_<T> my_vector(size, value);
-//  compare_vector<T>(my_vector, stl_vector);
-//  stl_vector.shrink_to_fit();
-//  my_vector.shrink_to_fit();
-//  compare_vector<T>(my_vector, stl_vector);
-//}
-//
-//TEST(vector, shrink_to_fit) {
-//  shrink_to_fit<A>(100, 2);
-//  shrink_to_fit<int>(200, 2);
-//  shrink_to_fit<char>(30, 2);
-//  shrink_to_fit<std::string>(1, std::string("42"));
-//}
+template<class T>
+void shrink_to_fit(int size, const T value) {
+  stl::_vector<T> stl_vector(size, value);
+  my::vector_<T> my_vector(size, value);
+  stl_vector.reserve(1000);
+  my_vector.reserve(1000);
+  compare_vector<T>(my_vector, stl_vector);
+  stl_vector.shrink_to_fit();
+  my_vector.shrink_to_fit();
+  compare_vector<T>(my_vector, stl_vector);
+}
+
+TEST(vector, shrink_to_fit) {
+  shrink_to_fit<A>(100, 2);
+  shrink_to_fit<int>(200, 2);
+  shrink_to_fit<char>(30, 2);
+  shrink_to_fit<std::string>(1, std::string("42"));
+}
 //// -----------------------------------------------------------------------------
 //
 //// =============================== SIZE ========================================
@@ -1710,118 +1724,118 @@ TEST(vector, iterator_constructor) {
 //// =============================================================================
 //
 //// -----------------------------------------------------------------------------
-//
-//void const_iterators(const typename stl::_vector<int>::const_iterator &std_iter_1,
-//                     const typename my::vector_<int>::const_iterator &my_iter_1) {
-//  auto my_iter_2 = my_iter_1;
-//  auto std_iter_2 = std_iter_1;
-//  EXPECT_EQ((my_iter_1 > my_iter_2), (std_iter_2 > std_iter_1));
-//  EXPECT_EQ((my_iter_1 >= my_iter_2), (std_iter_2 >= std_iter_1));
-//  EXPECT_EQ((my_iter_1 < my_iter_2), (std_iter_2 < std_iter_1));
-//  EXPECT_EQ((my_iter_1 <= my_iter_2), (std_iter_2 <= std_iter_1));
-//  EXPECT_EQ((my_iter_1 == my_iter_2), (std_iter_2 == std_iter_1));
-//}
-//
-//void reverse_const_iterators(
-//           const typename stl::_vector<int>::const_reverse_iterator &std_iter_1,
-//           const typename my::vector_<int>::const_reverse_iterator &my_iter_1) {
-//  auto my_iter_2 = my_iter_1;
-//  auto std_iter_2 = std_iter_1;
-//  EXPECT_EQ((my_iter_1 > my_iter_2), (std_iter_2 > std_iter_1));
-//  EXPECT_EQ((my_iter_1 >= my_iter_2), (std_iter_2 >= std_iter_1));
-//  EXPECT_EQ((my_iter_1 < my_iter_2), (std_iter_2 < std_iter_1));
-//  EXPECT_EQ((my_iter_1 <= my_iter_2), (std_iter_2 <= std_iter_1));
-//  EXPECT_EQ((my_iter_1 == my_iter_2), (std_iter_2 == std_iter_1));
-//}
-//
-//void iterators(const typename stl::_vector<int>::iterator &std_iter_1,
-//                     const typename my::vector_<int>::iterator &my_iter_1) {
-//  auto my_iter_2 = my_iter_1;
-//  auto std_iter_2 = std_iter_1;
-//  EXPECT_EQ((my_iter_1 > my_iter_2), (std_iter_2 > std_iter_1));
-//  EXPECT_EQ((my_iter_1 >= my_iter_2), (std_iter_2 >= std_iter_1));
-//  EXPECT_EQ((my_iter_1 < my_iter_2), (std_iter_2 < std_iter_1));
-//  EXPECT_EQ((my_iter_1 <= my_iter_2), (std_iter_2 <= std_iter_1));
-//  EXPECT_EQ((my_iter_1 == my_iter_2), (std_iter_2 == std_iter_1));
-//}
-//
-//void reverse_iterators(
-//    const typename stl::_vector<int>::reverse_iterator &std_iter_1,
-//    const typename my::vector_<int>::reverse_iterator &my_iter_1) {
-//  auto my_iter_2 = my_iter_1;
-//  auto std_iter_2 = std_iter_1;
-//  EXPECT_EQ((my_iter_1 > my_iter_2), (std_iter_2 > std_iter_1));
-//  EXPECT_EQ((my_iter_1 >= my_iter_2), (std_iter_2 >= std_iter_1));
-//  EXPECT_EQ((my_iter_1 < my_iter_2), (std_iter_2 < std_iter_1));
-//  EXPECT_EQ((my_iter_1 <= my_iter_2), (std_iter_2 <= std_iter_1));
-//  EXPECT_EQ((my_iter_1 == my_iter_2), (std_iter_2 == std_iter_1));
-//}
-//
-//TEST(vector, iter) {
-//  int size = 10;
-//  stl::_vector<A> stl_vector(size, 0);
-//  my::vector_<A> my_vector(size, 0);
-//  for (int i = 0; i < size; ++i) {
-//    stl_vector[0] = my_vector[0] = A(i);
-//  }
-//
-//  EXPECT_EQ(*stl_vector.begin(), *my_vector.begin());
-//  EXPECT_EQ(*(stl_vector.end() - 1), *(my_vector.end() - 1));
-//  EXPECT_EQ(*stl_vector.rbegin(), *my_vector.rbegin());
-//  EXPECT_EQ(*(stl_vector.rend() - 1), *(my_vector.rend() - 1));
-//  // const iter
-//  {
-//    stl::_vector<const int> cstl_vector(size, 0);
-//    my::vector_<const int> cmy_vector(size, 0);
-//    const_iterators(cstl_vector.begin(), cmy_vector.begin());
-//  }
-//  // const reverse iter
-//  {
-//    stl::_vector<const int> cstl_vector(size, 0);
-//    my::vector_<const int> cmy_vector(size, 0);
-//    reverse_const_iterators(cstl_vector.rbegin(), cmy_vector.rbegin());
-//  }
-//  // iter
-//  {
-//    stl::_vector<int> cstl_vector(size, 0);
-//    my::vector_<int> cmy_vector(size, 0);
-//    const_iterators(cstl_vector.begin(), cmy_vector.begin());
-//  }
-//  // reverse iter
-//  {
-//    stl::_vector<int> cstl_vector(size, 0);
-//    my::vector_<int> cmy_vector(size, 0);
-//    reverse_iterators(cstl_vector.rbegin(), cmy_vector.rbegin());
-//  }
-//}
-//
+
+void const_iterators(const typename stl::_vector<int>::const_iterator &std_iter_1,
+                     const typename my::vector_<int>::const_iterator &my_iter_1) {
+  auto my_iter_2 = my_iter_1;
+  auto std_iter_2 = std_iter_1;
+  EXPECT_EQ((my_iter_1 > my_iter_2), (std_iter_2 > std_iter_1));
+  EXPECT_EQ((my_iter_1 >= my_iter_2), (std_iter_2 >= std_iter_1));
+  EXPECT_EQ((my_iter_1 < my_iter_2), (std_iter_2 < std_iter_1));
+  EXPECT_EQ((my_iter_1 <= my_iter_2), (std_iter_2 <= std_iter_1));
+  EXPECT_EQ((my_iter_1 == my_iter_2), (std_iter_2 == std_iter_1));
+}
+
+void reverse_const_iterators(
+           const typename stl::_vector<int>::const_reverse_iterator &std_iter_1,
+           const typename my::vector_<int>::const_reverse_iterator &my_iter_1) {
+  auto my_iter_2 = my_iter_1;
+  auto std_iter_2 = std_iter_1;
+  EXPECT_EQ((my_iter_1 > my_iter_2), (std_iter_2 > std_iter_1));
+  EXPECT_EQ((my_iter_1 >= my_iter_2), (std_iter_2 >= std_iter_1));
+  EXPECT_EQ((my_iter_1 < my_iter_2), (std_iter_2 < std_iter_1));
+  EXPECT_EQ((my_iter_1 <= my_iter_2), (std_iter_2 <= std_iter_1));
+  EXPECT_EQ((my_iter_1 == my_iter_2), (std_iter_2 == std_iter_1));
+}
+
+void iterators(const typename stl::_vector<int>::iterator &std_iter_1,
+                     const typename my::vector_<int>::iterator &my_iter_1) {
+  auto my_iter_2 = my_iter_1;
+  auto std_iter_2 = std_iter_1;
+  EXPECT_EQ((my_iter_1 > my_iter_2), (std_iter_2 > std_iter_1));
+  EXPECT_EQ((my_iter_1 >= my_iter_2), (std_iter_2 >= std_iter_1));
+  EXPECT_EQ((my_iter_1 < my_iter_2), (std_iter_2 < std_iter_1));
+  EXPECT_EQ((my_iter_1 <= my_iter_2), (std_iter_2 <= std_iter_1));
+  EXPECT_EQ((my_iter_1 == my_iter_2), (std_iter_2 == std_iter_1));
+}
+
+void reverse_iterators(
+    const typename stl::_vector<int>::reverse_iterator &std_iter_1,
+    const typename my::vector_<int>::reverse_iterator &my_iter_1) {
+  auto my_iter_2 = my_iter_1;
+  auto std_iter_2 = std_iter_1;
+  EXPECT_EQ((my_iter_1 > my_iter_2), (std_iter_2 > std_iter_1));
+  EXPECT_EQ((my_iter_1 >= my_iter_2), (std_iter_2 >= std_iter_1));
+  EXPECT_EQ((my_iter_1 < my_iter_2), (std_iter_2 < std_iter_1));
+  EXPECT_EQ((my_iter_1 <= my_iter_2), (std_iter_2 <= std_iter_1));
+  EXPECT_EQ((my_iter_1 == my_iter_2), (std_iter_2 == std_iter_1));
+}
+
+TEST(vector, iter) {
+  int size = 10;
+  stl::_vector<A> stl_vector(size, 0);
+  my::vector_<A> my_vector(size, 0);
+  for (int i = 0; i < size; ++i) {
+    stl_vector[0] = my_vector[0] = A(i);
+  }
+
+  EXPECT_EQ(*stl_vector.begin(), *my_vector.begin());
+  EXPECT_EQ(*(stl_vector.end() - 1), *(my_vector.end() - 1));
+  EXPECT_EQ(*stl_vector.rbegin(), *my_vector.rbegin());
+  EXPECT_EQ(*(stl_vector.rend() - 1), *(my_vector.rend() - 1));
+  // const iter
+  {
+    stl::_vector<const int> cstl_vector(size, 0);
+    my::vector_<const int> cmy_vector(size, 0);
+    const_iterators(cstl_vector.begin(), cmy_vector.begin());
+  }
+  // const reverse iter
+  {
+    stl::_vector<const int> cstl_vector(size, 0);
+    my::vector_<const int> cmy_vector(size, 0);
+    reverse_const_iterators(cstl_vector.rbegin(), cmy_vector.rbegin());
+  }
+  // iter
+  {
+    stl::_vector<int> cstl_vector(size, 0);
+    my::vector_<int> cmy_vector(size, 0);
+    const_iterators(cstl_vector.begin(), cmy_vector.begin());
+  }
+  // reverse iter
+  {
+    stl::_vector<int> cstl_vector(size, 0);
+    my::vector_<int> cmy_vector(size, 0);
+    reverse_iterators(cstl_vector.rbegin(), cmy_vector.rbegin());
+  }
+}
+
 //// -----------------------------------------------------------------------------
 //
 //// -----------------------------------------------------------------------------
-//TEST(vector, const_iter) {
-//  int size = 10;
-//  stl::_vector<A> stl_vector(size, 0);
-//  my::vector_<A> my_vector(size, 0);
-//  for (int i = 0; i < size; ++i) {
-//    stl_vector[0] = my_vector[0] = A(i);
-//  }
-//  EXPECT_EQ(*stl_vector.cbegin(), *my_vector.cbegin());
-//  EXPECT_EQ(*(stl_vector.cend() - 1), *(my_vector.cend() - 1));
-//  EXPECT_EQ(*stl_vector.crbegin(), *my_vector.crbegin());
-//  EXPECT_EQ(*(stl_vector.crend() - 1), *(my_vector.crend() - 1));
-//  // const iter
-//  {
-//    stl::_vector<int> cstl_vector(size, 0);
-//    my::vector_<int> cmy_vector(size, 0);
-//    const_iterators(cstl_vector.cbegin(), cmy_vector.cbegin());
-//  }
-//  // const reverse iter
-//  {
-//    stl::_vector<int> cstl_vector(size, 0);
-//    my::vector_<int> cmy_vector(size, 0);
-//    reverse_const_iterators(cstl_vector.crbegin(), cmy_vector.crbegin());
-//  }
-//}
+TEST(vector, const_iter) {
+  int size = 10;
+  stl::_vector<A> stl_vector(size, 0);
+  my::vector_<A> my_vector(size, 0);
+  for (int i = 0; i < size; ++i) {
+    stl_vector[0] = my_vector[0] = A(i);
+  }
+  EXPECT_EQ(*stl_vector.cbegin(), *my_vector.cbegin());
+  EXPECT_EQ(*(stl_vector.cend() - 1), *(my_vector.cend() - 1));
+  EXPECT_EQ(*stl_vector.crbegin(), *my_vector.crbegin());
+  EXPECT_EQ(*(stl_vector.crend() - 1), *(my_vector.crend() - 1));
+  // const iter
+  {
+    stl::_vector<int> cstl_vector(size, 0);
+    my::vector_<int> cmy_vector(size, 0);
+    const_iterators(cstl_vector.cbegin(), cmy_vector.cbegin());
+  }
+  // const reverse iter
+  {
+    stl::_vector<int> cstl_vector(size, 0);
+    my::vector_<int> cmy_vector(size, 0);
+    reverse_const_iterators(cstl_vector.crbegin(), cmy_vector.crbegin());
+  }
+}
 //// -----------------------------------------------------------------------------
 //
 //// =============================================================================

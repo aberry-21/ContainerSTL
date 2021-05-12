@@ -620,7 +620,7 @@ template<class T, class Alloc>
   template<class T, class Alloc>
   typename Vector<T, Alloc>::size_type Vector<T, Alloc>::get_new_capacity(
                                                     Vector::size_type n) {
-    if (capacity_ * 2 >= size_ + n) {//?
+    if (capacity_ * 2 >= size_ + n) {
       size_type new_cap = capacity_ * 2;
       if (new_cap > max_size()) {
         new_cap = max_size();

@@ -172,56 +172,18 @@ class vector {
 // --------------------------Get_allocator--------------------------------------
   inline allocator_type get_allocator() const noexcept;
 
-/*
-**                         Protected Member Functions
-*/
-// protected:
-//    inline size_type get_new_capacity(size_type n);
-//    inline bool compareForIdentity(const value_type& a, const value_type& b);
-//    inline void move_range(iterator position, size_type n);
-//    inline void default_initialize(size_type n);
-//    inline void destroy_storage(pointer data, size_type n, size_type cap);
-//    inline void clear_storage(pointer data, size_type n);
-//    inline void fill_initialize(struct field &storage, const value_type& value,
-//                                size_type offset, bool def);
-//    inline pointer fill_initialize_for_copy(size_type n, size_type cap,
-//                                            difference_type offset,
-//                                            const value_type& value);
-//    template<typename InputIterator>
-//    inline pointer copy_range(InputIterator first, InputIterator last,
-//                              typename vector<T, Alloc>::size_type cap,
-//                              const Alloc& alloc);
-//    template<typename InputIterator>
-//    inline void range_initialize(InputIterator first, InputIterator last,
-//                                 const Alloc& alloc);
-//    template<class InputIt, class ForwardIt>
-//    inline ForwardIt uninitialized_copy(InputIt first, InputIt last,
-//                                        ForwardIt d_first, const Alloc& alloc);
-//    template<typename InputIterator>
-//    inline void erase_at_end(InputIterator first, InputIterator last);
-//    inline void default_append(size_type append_size);
-//    inline void append_end(pointer data, size_type append_size, size_type size, const value_type& value);
-//    template<class InputIt, class ForwardIt>
-//    inline ForwardIt uninitialized_move(InputIt first, InputIt last,
-//                                        ForwardIt d_first, size_type capacity);
-//    template<class InputIt, class ForwardIt>
-//    inline ForwardIt uninitialized_move(InputIt first, InputIt last,
-//                                        ForwardIt d_first);
-//    inline void move_old_data(pointer data, size_type offset,
-//                              iterator position, size_type size);
-
  private:
   struct field {
     pointer data_;
     size_type size_;
     size_type capacity_;
     allocator_type alloc_;
-    field(pointer data,
+    inline field(pointer data,
           size_type size,
           size_type capacity,
           allocator_type alloc)
         : data_(data), size_(size), capacity_(capacity), alloc_(alloc) {}
-    field(pointer data,
+    inline field(pointer data,
           size_type size,
           size_type capacity)
         : data_(data), size_(size), capacity_(capacity), alloc_() {}
@@ -229,20 +191,52 @@ class vector {
       data_ = nullptr;
       size_ = capacity_ = 0;
     }
+    inline field& operator=(const field &x) = delete;
+    inline field& operator=(field &&x) noexcept{
+      if (this == &x) {
+        return *this;
+      }
+      size_ = x.size_;
+      capacity_ = x.capacity_;
+      alloc_ = x.alloc_;
+      data_ = x.data_;
+      x.capacity_ = x.size_ = 0;
+      x.data_ = nullptr;
+      return *this;
+    }
+    inline void swap(field &x) {
+      std::swap(size_, x.size_);
+      std::swap(capacity_, x.capacity_);
+      std::swap(alloc_, x.alloc_);
+      std::swap(data_, x.data_);
+    }
   } attributes_;
+
+/*
+**                         Private Member Functions
+*/
+
   inline void initialize_storage(field &storage);
   inline void fill_initialize(field &storage, const value_type &value,
-                              size_type offset);
-  inline void default_initialize(field &storage);
-  inline void clear_storage(field &storage);
-  inline void destroy_storage(field &storage);
+                              size_type size, size_type offset);
+  inline void default_initialize(field &storage, size_type size, size_type offset);
+  inline void clear_storage(field &storage, size_type offset);
+  inline void destroy_storage(field &storage, size_type offset);
   template<class InputIt, class ForwardIt>
   inline ForwardIt uninitialized_copy(InputIt first, InputIt last,
                                       ForwardIt d_first, const Alloc& alloc);
   template<typename InputIterator>
   inline void range_initialize(field &storage, InputIterator first,
                                InputIterator last, size_type offset);
-
+  template<typename ForwardIt>
+  inline void erase_at_end(ForwardIt first, ForwardIt last);
+  inline size_type get_new_capacity(size_type n);
+  inline void append_end(field &storage, size_type append_size);
+  inline void default_append(size_type append_size);
+  template<class InputIt>
+  inline void uninitialized_move(InputIt first, InputIt last,
+                                      field &storage);
+  inline bool compareForIdentity(const value_type& a, const value_type& b);
 };
 
 template<class T, class Alloc>
@@ -250,15 +244,15 @@ vector<T, Alloc>::vector(const allocator_type &alloc)
                         : attributes_(nullptr, 0, 0, alloc) {}
 
 template<class T, class Alloc>
-void vector<T, Alloc>::clear_storage(vector::field &storage) {
-  for (size_type i = 0; i < storage.size_; ++i) {
+void vector<T, Alloc>::clear_storage(vector::field &storage, size_type offset) {
+  for (size_type i = offset; i < storage.size_; ++i) {
     storage.alloc_.destroy(storage.data_ + i);
   }
 }
 
 template<class T, class Alloc>
-void vector<T, Alloc>::destroy_storage(vector::field &storage) {
-  clear_storage(storage);
+void vector<T, Alloc>::destroy_storage(vector::field &storage, size_type offset) {
+  clear_storage(storage, offset);
   if(storage.data_) {
     storage.alloc_.deallocate(storage.data_, storage.capacity_);
   }
@@ -282,27 +276,29 @@ void vector<T, Alloc>::initialize_storage(vector::field &storage) {
 template<class T, class Alloc>
 void vector<T, Alloc>::fill_initialize(vector::field &storage,
                                        const value_type &value,
+                                       vector::size_type size,
                                        vector::size_type offset) {
   initialize_storage(storage);
-  for (size_type i = 0; i < storage.size_; ++i) {
+  for (size_type i = 0; i < size; ++i) {
     try {
         storage.alloc_.construct(storage.data_ + offset + i, value);
     } catch (...) {
-      destroy_storage(storage);
+      destroy_storage(storage, offset);
       throw;
     }
   }
 }
 
 template<class T, class Alloc>
-void vector<T, Alloc>::default_initialize(vector::field &storage) {
+void vector<T, Alloc>::default_initialize(vector::field &storage,
+                                          vector::size_type size,
+                                          vector::size_type offset) {
   initialize_storage(storage);
-  for (size_type i = 0; i < storage.size_; ++i) {
+  for (size_type i = 0; i < size; ++i) {
     try {
-        storage.alloc_.construct(storage.data_ + i);
+        storage.alloc_.construct(storage.data_ + offset + i);
     } catch (...) {
-      storage.size_ = i;
-      destroy_storage(storage);
+      destroy_storage(storage, offset);
       throw;
     }
   }
@@ -311,7 +307,7 @@ void vector<T, Alloc>::default_initialize(vector::field &storage) {
 template<class T, class Alloc>
 vector<T, Alloc>::vector(vector::size_type n)
                         : attributes_(nullptr, n, n) {
-  default_initialize(attributes_);
+  default_initialize(attributes_, attributes_.size_, 0);
 }
 
 template<class T, class Alloc>
@@ -319,12 +315,12 @@ vector<T, Alloc>::vector(vector::size_type n,
                          const value_type &value,
                          const allocator_type &a)
                          : attributes_(nullptr, n, n, a) {
-  fill_initialize(attributes_, value, 0);
+  fill_initialize(attributes_, value, attributes_.size_, 0);
 }
 
 template<class T, class Alloc>
 vector<T, Alloc>::~vector() noexcept {
-  destroy_storage(attributes_);
+  destroy_storage(attributes_, 0);
 }
 
 template<class T, class Alloc>
@@ -378,7 +374,7 @@ void vector<T, Alloc>::range_initialize(vector::field &storage,
     uninitialized_copy(first, last, iterator(storage.data_ + offset),
                        storage.alloc_);
   } catch (...) {
-    destroy_storage(storage);
+    destroy_storage(storage, 0);
     throw;
   }
 }
@@ -433,7 +429,7 @@ typename vector<T, Alloc>::const_iterator vector<T, Alloc>::end() const noexcept
 template<class T, class Alloc>
 vector<T, Alloc>::vector(const vector &x)
                          : attributes_(nullptr, x.attributes_.size_,
-                                       x.attributes_.capacity_,
+                                       x.attributes_.size_,
                                        x.attributes_.alloc_) {
   range_initialize(attributes_, x.begin(), x.end(), 0);
 }
@@ -462,6 +458,328 @@ vector<T, Alloc>::vector(const vector &&x,
   std::swap(attributes_.capacity_, x.attributes_.capacity_);
   std::swap(attributes_.size_, x.attributes_.size_);
   std::swap(attributes_.alloc_, x.attributes_.alloc_);
+}
+template<class T, class Alloc>
+vector<T, Alloc> &vector<T, Alloc>::operator=(const vector &x) {
+  if (this == &x) {
+    return *this;
+  }
+  if (attributes_.capacity_ < x.attributes_.capacity_) {
+    field new_storage(nullptr, x.attributes_.size_, x.attributes_.capacity_,
+                      x.attributes_.alloc_);
+    range_initialize(new_storage, x.begin(), x.end(), 0);
+    destroy_storage(attributes_, 0);
+    attributes_ = std::move(new_storage);
+  } else {
+    this->clear();
+    uninitialized_copy(x.begin(), x.end(), this->begin(), x.attributes_.alloc_);
+    attributes_.size_ = x.attributes_.size_;
+    attributes_.alloc_ = x.attributes_.alloc_;
+  }
+  return *this;
+}
+
+template<class T, class Alloc>
+void vector<T, Alloc>::clear() noexcept {
+  clear_storage(attributes_, 0);
+  attributes_.size_ = 0;
+}
+
+template<class T, class Alloc>
+vector<T, Alloc> &vector<T, Alloc>::operator=(vector &&x) noexcept {
+  this->~vector();
+  attributes_ = std::move(x.attributes_);
+  return *this;
+}
+template<class T, class Alloc>
+typename vector<T, Alloc>::const_iterator vector<T, Alloc>::cbegin() const noexcept{
+  return vector<T, Alloc>::begin();
+}
+
+template<class T, class Alloc>
+typename vector<T, Alloc>::const_iterator vector<T, Alloc>::cend() const noexcept{
+  return vector<T, Alloc>::end();
+}
+
+template<class T, class Alloc>
+typename vector<T, Alloc>::const_reverse_iterator vector<T, Alloc>::crbegin() const noexcept{
+  return rbegin();
+}
+
+template<class T, class Alloc>
+typename vector<T, Alloc>::const_reverse_iterator vector<T, Alloc>::crend() const noexcept{
+  return rend();
+}
+
+template<class T, class Alloc>
+typename vector<T, Alloc>::reverse_iterator vector<T, Alloc>::rbegin() noexcept{
+  return reverse_iterator(end());
+}
+
+template<class T, class Alloc>
+typename vector<T, Alloc>::const_reverse_iterator vector<T, Alloc>::rbegin() const noexcept{
+  return const_reverse_iterator(end());
+}
+
+template<class T, class Alloc>
+typename vector<T, Alloc>::reverse_iterator vector<T, Alloc>::rend() noexcept{
+  return reverse_iterator(begin());
+}
+
+template<class T, class Alloc>
+typename vector<T, Alloc>::const_reverse_iterator vector<T, Alloc>::rend() const noexcept{
+  return const_reverse_iterator(begin());
+}
+
+template<class T, class Alloc>
+template<typename ForwardIt>
+void vector<T, Alloc>::erase_at_end(ForwardIt first, ForwardIt last) {
+  attributes_.size_ -= (last - first);
+  for (; first != last; ++first) {
+    attributes_.alloc_.destroy(first.base());
+  }
+}
+
+template<class T, class Alloc>
+typename vector<T, Alloc>::size_type vector<T, Alloc>::get_new_capacity(
+                                                          vector::size_type n) {
+  if (attributes_.capacity_ * 2 < attributes_.size_ + n) {
+    return (attributes_.size_ + n);
+  }
+  size_type new_cap = attributes_.capacity_ * 2;
+  if (new_cap > max_size()) {
+    new_cap = max_size();
+  }
+  return (new_cap);
+}
+
+template<class T, class Alloc>
+void vector<T, Alloc>::append_end(vector::field &storage,
+                                  size_type append_size) {
+  for (size_type i = 0; i < append_size; ++i) {
+    try {
+      storage.alloc_.construct(storage.data_ + storage.size_ + i);
+    } catch (...) {
+      for (; i > 0; --i) {
+        clear_storage(storage, storage.size_);
+      }
+      throw;
+    }
+  }
+}
+
+template<class T, class Alloc>
+template<class InputIt>
+void vector<T, Alloc>::uninitialized_move(InputIt first, InputIt last,
+                                          field &storage) {
+  iterator current = iterator(storage.data_);
+  iterator first_copy = first;
+  try {
+    for (; first != last; ++first, ++current) {
+      attributes_.alloc_.construct(current.base(), std::move_if_noexcept(*first));
+    }
+  } catch (...) {
+    std::move_backward(iterator(storage.data_), current,
+                       first_copy + (current - iterator(storage.data_)));
+    destroy_storage(storage, storage.size_);
+    throw;
+  }
+}
+
+template<class T, class Alloc>
+void vector<T, Alloc>::default_append(vector::size_type append_size) {
+  if (attributes_.capacity_ >= attributes_.size_ + append_size) {
+    attributes_.size_ += append_size;
+    try {
+      append_end(attributes_, append_size);
+    } catch (...) {
+      attributes_.size_ -= append_size;
+    }
+    return;
+  }
+  field new_storage(nullptr, attributes_.size_,
+                    get_new_capacity(append_size),
+                    attributes_.alloc_);
+  default_initialize(new_storage, append_size, new_storage.size_);
+  uninitialized_move(begin(), end(), new_storage);
+  new_storage.size_ += append_size;
+  destroy_storage(attributes_, 0);
+  attributes_ = std::move(new_storage);
+}
+
+template<class T, class Alloc>
+void vector<T, Alloc>::resize(vector::size_type new_size) {
+  if (new_size > max_size()) {
+    throw ft::length_error("vector");
+  }
+  if (new_size > attributes_.size_) {
+    default_append(new_size - attributes_.size_);
+  } else if (new_size < attributes_.size_) {
+    erase_at_end(begin() + new_size, end());
+  }
+}
+
+template<class T, class Alloc>
+bool vector<T, Alloc>::empty() const noexcept {
+  return (!attributes_.size_);
+}
+
+template<class T, class Alloc>
+void vector<T, Alloc>::reserve(vector::size_type n) {
+  if (n <= attributes_.capacity_) return;
+  field new_storage(nullptr, 0, n, attributes_.alloc_);
+  new_storage.data_ = new_storage.alloc_.allocate(new_storage.capacity_);
+  new_storage.size_ = attributes_.size_;
+  uninitialized_move(begin(), end(), new_storage);
+  destroy_storage(attributes_, 0);
+  attributes_ = std::move(new_storage);
+}
+
+template<class T, class Alloc>
+void vector<T, Alloc>::shrink_to_fit() {
+  if (attributes_.size_ == attributes_.capacity_) {
+    return;
+  }
+  field new_storage(nullptr, 0, attributes_.size_, attributes_.alloc_);
+  new_storage.data_ = new_storage.alloc_.allocate(new_storage.capacity_);
+  new_storage.size_ = attributes_.size_;
+  uninitialized_move(begin(), end(), new_storage);
+  destroy_storage(attributes_, 0);
+  attributes_ = std::move(new_storage);
+}
+
+template<class T, class Alloc>
+T *vector<T, Alloc>::data() noexcept {
+  return attributes_.data_;
+}
+
+template<class T, class Alloc>
+const T *vector<T, Alloc>::data() const noexcept {
+  return attributes_.data_;
+}
+
+template<class T, class Alloc>
+typename vector<T, Alloc>::allocator_type vector<T, Alloc>
+    ::get_allocator() const noexcept {
+  return attributes_.alloc_;
+}
+template<class T, class Alloc>
+typename vector<T, Alloc>::reference vector<T, Alloc>::front() {
+  return *attributes_.data_;
+}
+
+template<class T, class Alloc>
+typename vector<T, Alloc>::const_reference vector<T, Alloc>::front() const {
+  return *attributes_.data_;
+}
+template<class T, class Alloc>
+
+typename vector<T, Alloc>::reference vector<T, Alloc>::back() {
+  return attributes_.data_[attributes_.size_ - 1];
+}
+
+template<class T, class Alloc>
+typename vector<T, Alloc>::const_reference vector<T, Alloc>::back() const {
+  return attributes_.data_[attributes_.size_ - 1];
+}
+
+template<class T, class Alloc>
+typename vector<T, Alloc>::reference vector<T, Alloc>::at(vector::size_type n) {
+  if (n >= attributes_.size_) {
+    throw ft::out_of_range("vector");
+  }
+  return attributes_.data_[n];
+}
+
+template<class T, class Alloc>
+typename vector<T, Alloc>::const_reference vector<T, Alloc>::at(
+    vector::size_type n) const {
+  if (n >= attributes_.size_) {
+    throw ft::out_of_range("vector");
+  }
+  return attributes_.data_[n];
+}
+template<class T, class Alloc>
+template<typename InputIterator>
+void vector<T, Alloc>::assign(InputIterator first,
+                              InputIterator last,
+                              typename std::enable_if<!std::numeric_limits<
+                                  InputIterator>::is_specialized>::type *) {
+  const difference_type n = std::distance(first, last);
+  if (n < 0) {
+    this->~vector();
+    throw ft::length_error("vector");
+  }
+  field new_storage(nullptr, n, n);
+  range_initialize(new_storage, first, last, 0);
+  if (attributes_.capacity_ < n) {
+    destroy_storage(attributes_, 0);
+    attributes_.swap(new_storage);
+  } else {
+    ft::vector<T, Alloc> copy_vector(begin(), end());
+    clear();
+    try {
+      uninitialized_move(iterator(new_storage.data_), iterator(new_storage.data_ +
+      new_storage.size_), attributes_);
+    } catch (...) {
+      attributes_ = std::move(copy_vector.attributes_);
+    }
+  }
+  destroy_storage(new_storage, 0);
+  attributes_.size_ = n;
+}
+
+template<class T, class Alloc>
+void vector<T, Alloc>::resize(vector::size_type new_size, const value_type &x) {
+  if (new_size > attributes_.size_)
+    insert(end(), new_size - attributes_.size_, x);
+  else if (new_size < attributes_.size_)
+    erase_at_end(begin() + new_size, end());
+}
+
+template<class T, class Alloc>
+bool vector<T, Alloc>::compareForIdentity(const value_type &a,
+                                          const value_type &b) {
+  return &a==&b;
+}
+
+template<class T, class Alloc>
+void vector<T, Alloc>::assign(vector::size_type n, const value_type &val) {
+  if (n < 0) {
+    this->~vector();
+    throw ft::length_error("vector");
+  }
+  if (attributes_.capacity_ < n) {
+    field new_storage(nullptr, n, n);
+    fill_initialize(new_storage, val, n, 0);
+    destroy_storage(attributes_, 0);
+    attributes_.swap(new_storage);
+    destroy_storage(new_storage, 0);
+  } else {
+    ft::vector<T, Alloc> copy_vector(begin(), end());
+    for (int i = 0; i < attributes_.size_; ++i) {
+      if (compareForIdentity(*(attributes_.data_ + i), val)) {
+        continue;
+      }
+      attributes_.alloc_.destroy(attributes_.data_ + i);
+    }
+    for (size_type i = 0; i < n; ++i) {
+      try {
+        if (compareForIdentity(*(attributes_.data_ + i), val)) {
+          continue;
+        }
+        attributes_.alloc_.construct(attributes_.data_ + i, val);
+      } catch (...) {
+        attributes_ = std::move(copy_vector.attributes_);
+        throw;
+      }
+    }
+  };
+  attributes_.size_ = n;
+}
+template<class T, class Alloc>
+void vector<T, Alloc>::assign(std::initializer_list<value_type> l) {
+  assign(l.begin(), l.end());
 }
 
 }
