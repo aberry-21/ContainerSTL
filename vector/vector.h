@@ -1,6 +1,10 @@
+// -*- C++ -*-
+//===------------------------------ vector --------------------------------===//
 //
-// Created by Aaron Berry on 5/2/21.
+//                     Created by Aaron Berry on 5/2/21.
 //
+//===----------------------------------------------------------------------===//
+
 #pragma once
 
 #include <utility>
@@ -237,6 +241,12 @@ class vector {
   inline void uninitialized_move(InputIt first, InputIt last,
                                       field &storage);
   inline bool compareForIdentity(const value_type& a, const value_type& b);
+  void append_value_end(vector::field &storage, size_type append_size,
+                                          const value_type &x);
+  inline void move_range(iterator position, size_type n);
+  void move_old_data(field &storage, iterator position, size_type n);
+  template<typename InputIterator>
+  void append_range_end(field &storage, size_type append_size, InputIterator first);
 };
 
 template<class T, class Alloc>
@@ -561,7 +571,7 @@ void vector<T, Alloc>::append_end(vector::field &storage,
       storage.alloc_.construct(storage.data_ + storage.size_ + i);
     } catch (...) {
       for (; i > 0; --i) {
-        clear_storage(storage, storage.size_);
+        storage.alloc_.destroy(storage.data_ + storage.size_ + i);
       }
       throw;
     }
@@ -712,7 +722,7 @@ void vector<T, Alloc>::assign(InputIterator first,
   }
   field new_storage(nullptr, n, n);
   range_initialize(new_storage, first, last, 0);
-  if (attributes_.capacity_ < n) {
+  if (attributes_.capacity_ < static_cast<size_type>(n)) {
     destroy_storage(attributes_, 0);
     attributes_.swap(new_storage);
   } else {
@@ -757,7 +767,7 @@ void vector<T, Alloc>::assign(vector::size_type n, const value_type &val) {
     destroy_storage(new_storage, 0);
   } else {
     ft::vector<T, Alloc> copy_vector(begin(), end());
-    for (int i = 0; i < attributes_.size_; ++i) {
+    for (size_type i = 0; i < attributes_.size_; ++i) {
       if (compareForIdentity(*(attributes_.data_ + i), val)) {
         continue;
       }
@@ -780,6 +790,294 @@ void vector<T, Alloc>::assign(vector::size_type n, const value_type &val) {
 template<class T, class Alloc>
 void vector<T, Alloc>::assign(std::initializer_list<value_type> l) {
   assign(l.begin(), l.end());
+}
+
+template<class T, class Alloc>
+vector<T, Alloc> &vector<T, Alloc>::operator=(std::initializer_list<value_type> l) {
+  this->assign(l.begin(), l.end());
+  return *this;
+}
+
+template<class T, class Alloc>
+void vector<T, Alloc>::push_back(const value_type &x) {
+  if (attributes_.capacity_ != attributes_.size_) {
+    attributes_.alloc_.construct(attributes_.data_ + attributes_.size_, x);
+    ++attributes_.size_;
+  } else {
+    insert(end(), x);
+  }
+}
+
+template<class T, class Alloc>
+void vector<T, Alloc>::push_back(value_type &&x) {
+  emplace_back(std::move(x));
+}
+
+template<class T, class Alloc>
+void vector<T, Alloc>::pop_back() {
+  --attributes_.size_;
+  attributes_.alloc_.destroy(attributes_.data_ + attributes_.size_);
+}
+
+template<class T, class Alloc>
+void vector<T, Alloc>::append_value_end(vector::field &storage,
+                                        size_type append_size,
+                                        const value_type &x) {
+  for (size_type i = 0; i < append_size; ++i) {
+    try {
+      storage.alloc_.construct(storage.data_ + storage.size_ + i, x);
+    } catch (...) {
+      for (; i > 0; --i) {
+        storage.alloc_.destroy(storage.data_ + storage.size_ + i);
+      }
+      throw;
+    }
+  }
+}
+
+template<class T, class Alloc>
+void vector<T, Alloc>::move_range(vector::iterator position,
+                                  vector::size_type n) {
+  iterator last = end() - 1;
+  --position;
+  for (;last != position; --last, --n) {
+    std::swap(*last, attributes_.data_[attributes_.size_ + n - 1]);
+  }
+}
+
+template<class T, class Alloc>
+void vector<T, Alloc>::move_old_data(vector::field &storage,
+                                     vector::iterator position,
+                                     vector::size_type n) {
+  difference_type offset = position - begin();
+  try {
+    uninitialized_move(begin(), position, storage);
+  } catch (...) {
+    storage.size_ = offset + n;
+    destroy_storage(storage, offset);
+    throw;
+  }
+  storage.data_ += offset + n;
+  try {
+    uninitialized_move(position, end(), storage);
+  } catch (...) {
+    destroy_storage(storage, storage.size_);
+    throw;
+  }
+  storage.data_ -= offset + n;
+}
+
+template<class T, class Alloc>
+typename vector<T, Alloc>::iterator vector<T, Alloc>::insert(
+                                          vector::const_iterator position,
+                                          vector::size_type n,
+                                          const value_type &x) {
+  if (attributes_.size_ + n > max_size()) throw ft::length_error("vector");
+  pointer p = attributes_.data_ + (position - begin());
+  if (!n) {
+    return (iterator(p));
+  }
+  if (attributes_.capacity_ >= attributes_.size_ + n) {
+    append_value_end(attributes_, n, x);
+    if (position != end()) {
+      move_range(iterator(p), n);
+    }
+  } else {
+    field new_storage(nullptr, attributes_.size_, get_new_capacity(n),
+                      attributes_.alloc_);
+    fill_initialize(new_storage, x, n, position - begin());
+    move_old_data(new_storage, iterator(p), n);
+    p = new_storage.data_ + (position - begin());
+    destroy_storage(attributes_, 0);
+    attributes_ = std::move(new_storage);
+  }
+  attributes_.size_ += n;
+  return (iterator(p));
+}
+template<class T, class Alloc>
+typename vector<T, Alloc>::iterator vector<T, Alloc>::insert(
+                                          vector::const_iterator position,
+                                          const value_type &x) {
+  return insert(position, 1, x);
+}
+
+
+template<class T, class Alloc>
+template<typename InputIterator>
+void vector<T, Alloc>::append_range_end(vector::field &storage,
+                                        size_type append_size,
+                                        InputIterator first) {
+  for (size_type i = 0; i < append_size; ++i, ++first) {
+    try {
+      storage.alloc_.construct(storage.data_ + storage.size_ + i, *first);
+    } catch (...) {
+      for (; i > 0; --i) {
+        storage.alloc_.destroy(storage.data_ + storage.size_ + i);
+      }
+      throw;
+    }
+  }
+}
+
+template<class T, class Alloc>
+template<typename InputIterator>
+typename vector<T, Alloc>::iterator vector<T, Alloc>::insert(
+                                  vector::const_iterator position,
+                                  InputIterator first,
+                                  InputIterator last,
+                                  typename std::enable_if<!std::numeric_limits<
+                                      InputIterator>::is_specialized>::type *) {
+  pointer p = attributes_.data_ + (position - begin());
+  difference_type n = std::distance(first, last);
+  if (!n) return iterator(p);
+  if (attributes_.size_ + n > max_size()) throw ft::length_error("vector");
+  if (attributes_.capacity_ >= attributes_.size_ + n) {
+    append_range_end(attributes_, n, first);
+    if (position != end()) {
+      move_range(iterator(p), n);
+    }
+  } else {
+    field new_storage(nullptr, attributes_.size_, get_new_capacity(n),
+                      attributes_.alloc_);
+    range_initialize(new_storage, first, last, position - begin());
+    move_old_data(new_storage, iterator(p), n);
+    p = new_storage.data_ + (position - begin());
+    destroy_storage(attributes_, 0);
+    attributes_ = std::move(new_storage);
+  }
+  attributes_.size_ += n;
+  return (iterator(p));
+}
+
+template<class T, class Alloc>
+typename vector<T, Alloc>::iterator vector<T, Alloc>::insert(
+                                          vector::const_iterator position,
+                                          value_type &&x) {
+  return emplace(position, std::forward<value_type>(x));
+}
+template<class T, class Alloc>
+typename vector<T, Alloc>::iterator vector<T, Alloc>::insert(
+                                          vector::const_iterator position,
+                                          std::initializer_list<value_type> l) {
+  return insert(position, l.begin(), l.end());
+}
+
+template<class T, class Alloc>
+typename vector<T, Alloc>::iterator vector<T, Alloc>::erase(
+                                         vector::iterator first,
+                                         vector::iterator last) {
+  pointer p = attributes_.data_ + (first - begin());
+  if (first != last) {
+    std::move(last, end(), begin() + (first.base() - attributes_.data_));
+    difference_type n = last - first;
+    for (; n; --n) {
+      attributes_.alloc_.destroy(attributes_.data_ + attributes_.size_ - 1);
+      --attributes_.size_;
+    }
+  }
+  return iterator(p);
+}
+
+template<class T, class Alloc>
+typename vector<T, Alloc>::iterator vector<T, Alloc>::erase(
+                                                    vector::iterator position) {
+  return erase(position, position + 1);
+}
+
+template<class T, class Alloc>
+void vector<T, Alloc>::swap(vector &x) {
+  std::swap(attributes_.data_, x.attributes_.data_);
+  std::swap(attributes_.capacity_, x.attributes_.capacity_);
+  std::swap(attributes_.size_, x.attributes_.size_);
+  std::swap(attributes_.alloc_, x.attributes_.alloc_);
+}
+
+template<class T, class Alloc>
+template<typename... Args>
+typename vector<T, Alloc>::iterator vector<T, Alloc>::emplace(
+                                                vector::const_iterator position,
+                                                Args &&... args) {
+  if (attributes_.size_ + 1 > max_size()) throw ft::length_error("vector");
+  pointer p = attributes_.data_ + (position - begin());
+  if (attributes_.capacity_ >= attributes_.size_ + 1) {
+    try {
+      attributes_.alloc_.construct(attributes_.data_ + attributes_.size_,
+                                   std::forward<Args>(args) ...);
+    } catch (...) {
+      attributes_.alloc_.destroy(attributes_.data_ + attributes_.size_);
+      throw;
+    }
+    if (position != end()) {
+      move_range(iterator(p), 1);
+    }
+  } else {
+    field new_storage(nullptr, attributes_.size_, get_new_capacity(1),
+                      attributes_.alloc_);
+    initialize_storage(new_storage);
+    try {
+      new_storage.alloc_.construct(new_storage.data_ + (position - begin()),
+                                   std::forward<Args>(args) ...);
+    } catch (...) {
+      new_storage.alloc_.destroy(new_storage.data_ + new_storage.size_);
+      throw;
+    }
+    move_old_data(new_storage, iterator(p), 1);
+    p = new_storage.data_ + (position - begin());
+    destroy_storage(attributes_, 0);
+    attributes_ = std::move(new_storage);
+  }
+  ++attributes_.size_;
+  return (iterator(p));
+}
+
+template<class T, class Alloc>
+template<typename... Args>
+void vector<T, Alloc>::emplace_back(Args &&... args) {
+  emplace(end(), std::forward<Args>(args) ...);
+}
+
+template <class T, class Alloc>
+inline
+bool operator==(const vector<T,Alloc>& left, const vector<T,Alloc>& right) {
+  return(left.size() == right.size() &&
+  std::equal(left.begin(), left.end(), right.begin()));
+}
+
+template <class T, class Alloc>
+inline
+bool operator!=(const vector<T,Alloc>& left, const vector<T,Alloc>& right) {
+  return !(left == right);
+}
+
+template <class T, class Alloc>
+inline
+bool operator<(const vector<T,Alloc>& left, const vector<T,Alloc>& right) {
+  return std::lexicographical_compare(left.begin(), left.end(), right.begin(),
+                                      right.end());
+}
+
+template <class T, class Alloc>
+inline
+bool operator>(const vector<T,Alloc>& left, const vector<T,Alloc>& right) {
+  return right < left;
+}
+
+template <class T, class Alloc>
+inline
+bool operator<=(const vector<T,Alloc>& left, const vector<T,Alloc>& right) {
+  return !(right < left);
+}
+
+template <class T, class Alloc>
+inline
+bool operator>=(const vector<T,Alloc>& left, const vector<T,Alloc>& right) {
+  return !(left < right);
+}
+
+template <class T, class Alloc>
+inline
+void swap(const vector<T,Alloc>& left, const vector<T,Alloc>& right) {
+  return left.swap(right);
 }
 
 }
