@@ -9,7 +9,7 @@
 #include <new>
 #include <utility>
 #include "exception.h"
-#include "tools/utility.h"
+#include "utility.h"
 
 namespace ft {
 template<class Tp>

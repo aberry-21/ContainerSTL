@@ -8,6 +8,7 @@
 #include "tools/memory.h"
 #include "tools/profile.h"
 #include "vector/vector.h"
+#include "vector/test.hpp"
 #include "vector/random_access_iterator.h"
 //void* operator new(std::size_t sz) // no inline, required by [replacement.functions]/3
 //{
@@ -103,48 +104,39 @@ bool operator==(const A& a, const A& b) {
 #define stl std
 #define _vector vector
 
-template<class T>
-void insert_range_test(my::vector_<T> &my_vector, stl::_vector<T> &stl_vector,
-                       const T value) {
-  // self
-  {
-    for (const auto &item : stl_vector) {
-      std::cout << item.GetCount() << ' ';
-    }
-    std::cout << "\n______________________________________\n" << std::endl;
-    for (const auto &item : my_vector) {
-      std::cout << item.GetCount() << ' ';
-    }
-    std::cout << "\n______________________________________\n" << std::endl;
-    std::cout << "\n______________________________________\n" << std::endl;
+#define lib std
+#define con vector
 
-    stl_vector.insert(stl_vector.begin() + 1, stl_vector.begin() + 2, stl_vector.end());
-    my_vector.insert(my_vector.begin() + 1, my_vector.begin() + 2, my_vector.end());
-
-
-
-    for (const auto &item : stl_vector) {
-      std::cout << item.GetCount() << ' ';
-    }
-    std::cout << "\n______________________________________\n" << std::endl;
-    for (const auto &item : my_vector) {
-      std::cout << item.GetCount() << ' ';
-    }
-    std::cout << "\n______________________________________\n" << std::endl;
-
+void std_insert_iter_iter_iter_8390_leaks_test() {
+  std::cout << "\nassign_iter_iter_1280_leaks\n" << std::endl;
+  lib::con<Test> mouse(128);
+  for (size_t i = 0; i < mouse.size(); ++i) {
+    mouse[i].some_ = i;
   }
-}
+  lib::con<Test> fat_mouse(344);
+  for (size_t i = 0; i < fat_mouse.size(); ++i) {
+    fat_mouse[i].some_ = i + 1000;
+  }
 
+  try {
+    mouse.insert(mouse.begin(), fat_mouse.begin() + 10, fat_mouse.begin());
+  } catch(std::exception & e) {
+    std::cout << e.what() << std::endl;
+  }
 
-template<class T>
-void insert_range(const T value) {
-  stl::_vector<T> stl_vector(10);
-  stl_vector.reserve(20000);
-  my::vector_<T> my_vector(10);
-  my_vector.reserve(20000);
-  insert_range_test<T>(my_vector, stl_vector, value);
+  try {
+    mouse.insert(mouse.begin(), fat_mouse.begin(), (fat_mouse.begin() + fat_mouse.max_size()));
+  } catch(std::exception & e) {
+    std::cout << e.what() << std::endl;
+  }
+
 }
 
 int main() {
-  insert_range<A>(4);
+  stl::_vector<int> stl_vector(2);
+  my::vector_<int> my_vector(2);
+  my_vector.insert(stl_vector.begin(), my_vector.begin(), (my_vector.begin() + my_vector.max_size()));
+  for (const auto &item : stl_vector) {
+    std::cout << item << std::endl;
+  }
 }

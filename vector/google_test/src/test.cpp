@@ -8,7 +8,7 @@
 #include <vector>
 #include <list>
 #include "gtest/gtest.h"
-#include "../includes/A.h"
+#include "includes/A.h"
 //Your include
 #include "vector/vector.h"
 
@@ -86,6 +86,14 @@ void compare_vector(my::vector_<T> &my_vector, stl::_vector<T> &stl_vector) {
   for (size_t i = 0; i < size; ++i) {
     EXPECT_EQ(my_vector[i], stl_vector[i])
               << "Vectors x and y differ at index " << i;
+  }
+}
+
+template<class T>
+void init_vector(my::vector_<T> &my_vector, stl::_vector<T> &stl_vector) {
+  size_t size = stl_vector.size();
+  for (size_t i = 0; i < size; ++i) {
+    my_vector[i] = stl_vector[i] = i;
   }
 }
 
@@ -267,6 +275,7 @@ template<class T>
 void iterator_constructor(int count, const T value) {
   stl::_vector<T> stl_vector(count, value);
   my::vector_<T> my_vector(count, value);
+  init_vector(my_vector, stl_vector);
   {
     stl::_vector<T> stl_vector_copy(stl_vector.begin() + 2, stl_vector.end());
     my::vector_<T> my_vector_copy(my_vector.begin() + 2, my_vector.end());
@@ -290,8 +299,54 @@ void iterator_constructor(int count, const T value) {
 TEST(vector, iterator_constructor) {
   iterator_constructor<A>(13000, 4);
   iterator_constructor<int>(13, 4);
-  iterator_constructor<const int>(12, 2);
-  iterator_constructor<std::string>(10, std::string("vector"));
+  {
+    stl::_vector<const int> stl_vector(12, 2);
+    my::vector_<const int> my_vector(12, 2);
+    {
+      stl::_vector<const int> stl_vector_copy(stl_vector.begin() + 2, stl_vector.end());
+      my::vector_<const int> my_vector_copy(my_vector.begin() + 2, my_vector.end());
+      compare_vector<const int>(my_vector, stl_vector);
+      compare_vector<const int>(my_vector_copy, stl_vector_copy);
+    }
+    {
+      stl::_vector<const int> stl_vector_copy(my_vector.begin() + 2, my_vector.end());
+      my::vector_<const int> my_vector_copy(stl_vector.begin() + 2, stl_vector.end());
+      compare_vector<const int>(my_vector, stl_vector);
+      compare_vector<const int>(my_vector_copy, stl_vector_copy);
+    }
+    {
+      std::list<const int> lst(12, 1);
+      stl::_vector<const int> stl_vector_copy(++lst.begin(), lst.end());
+      my::vector_<const int> my_vector_copy(++lst.begin(), lst.end());
+      compare_vector<const int>(my_vector_copy, stl_vector_copy);
+    }
+  }
+  {
+    stl::_vector<std::string> stl_vector(12);
+    my::vector_<std::string> my_vector(12);
+    for (int i = 0; i < 12; ++i) {
+      stl_vector[i] = my_vector[i] = i + '0';
+    }
+    init_vector(my_vector, stl_vector);
+    {
+      stl::_vector<std::string> stl_vector_copy(stl_vector.begin() + 2, stl_vector.end());
+      my::vector_<std::string> my_vector_copy(my_vector.begin() + 2, my_vector.end());
+      compare_vector<std::string>(my_vector, stl_vector);
+      compare_vector<std::string>(my_vector_copy, stl_vector_copy);
+    }
+    {
+      stl::_vector<std::string> stl_vector_copy(my_vector.begin() + 2, my_vector.end());
+      my::vector_<std::string> my_vector_copy(stl_vector.begin() + 2, stl_vector.end());
+      compare_vector<std::string>(my_vector, stl_vector);
+      compare_vector<std::string>(my_vector_copy, stl_vector_copy);
+    }
+    {
+      std::list<std::string> lst(12, "vector");
+      stl::_vector<std::string> stl_vector_copy(++lst.begin(), lst.end());
+      my::vector_<std::string> my_vector_copy(++lst.begin(), lst.end());
+      compare_vector<std::string>(my_vector_copy, stl_vector_copy);
+    }
+  }
   try {
     my::vector_<int> my_vector(10, 1);
     my::vector_<int> my_vector_copy(my_vector.end(), my_vector.begin());
@@ -312,8 +367,9 @@ template<class T>
 void assign_value(int count, const T value) {
   // capacity < count
   {
-    stl::_vector<T> stl_vector(0, value);
-    my::vector_<T> my_vector(0, value);
+    stl::_vector<T> stl_vector(0);
+    my::vector_<T> my_vector(0);
+    init_vector(my_vector, stl_vector);
     compare_vector<T>(my_vector, stl_vector);
     stl_vector.assign(count, value);
     my_vector.assign(count, value);
@@ -321,8 +377,11 @@ void assign_value(int count, const T value) {
   }
   // capacity >= count
   {
-    stl::_vector<T> stl_vector(20000, value);
-    my::vector_<T> my_vector(20000, value);
+    stl::_vector<T> stl_vector(2);
+    my::vector_<T> my_vector(2);
+    init_vector(my_vector, stl_vector);
+    stl_vector.reserve(20000);
+    my_vector.reserve(20000);
     compare_vector<T>(my_vector, stl_vector);
     stl_vector.assign(count, value);
     my_vector.assign(count, value);
@@ -331,22 +390,45 @@ void assign_value(int count, const T value) {
 }
 
 TEST(vector, assign_value) {
-  my::vector_<int> my_vector(10, 1);
-  stl::_vector<int> stl_vector(10, 1);
-  try {
-    my_vector.assign(-1, 1);
-  } catch (std::exception const &ex) {
-    EXPECT_EQ(ex.what(), std::string("vector"));
-  }
-  try {
-    stl_vector.assign(-1, 1);
-  } catch (std::exception const &ex) {
-    EXPECT_EQ(ex.what(), std::string("vector"));
+  {
+    my::vector_<int> my_vector(10, 1);
+    stl::_vector<int> stl_vector(10, 1);
+    try {
+      my_vector.assign(-1, 1);
+    } catch (std::exception const &ex) {
+      EXPECT_EQ(ex.what(), std::string("vector"));
+    }
+    try {
+      stl_vector.assign(-1, 1);
+    } catch (std::exception const &ex) {
+      EXPECT_EQ(ex.what(), std::string("vector"));
+    }
   }
   assign_value<A>(13000, 4);
   assign_value<int>(13, 4);
   assign_value<char>(12, 2);
-  assign_value<std::string>(10, std::string("vector"));
+  // capacity < count
+  {
+    stl::_vector<std::string> stl_vector(0);
+    my::vector_<std::string> my_vector(0);
+    init_vector(my_vector, stl_vector);
+    compare_vector<std::string>(my_vector, stl_vector);
+    stl_vector.assign(10, std::string("vector"));
+    my_vector.assign(10, std::string("vector"));
+    compare_vector<std::string>(my_vector, stl_vector);
+  }
+  // capacity >= count
+  {
+    stl::_vector<std::string> stl_vector(2);
+    my::vector_<std::string> my_vector(2);
+    init_vector(my_vector, stl_vector);
+    stl_vector.reserve(20000);
+    my_vector.reserve(20000);
+    compare_vector<std::string>(my_vector, stl_vector);
+    stl_vector.assign(10, std::string("vector"));
+    my_vector.assign(10, std::string("vector"));
+    compare_vector<std::string>(my_vector, stl_vector);
+  }
 }
 // -----------------------------------------------------------------------------
 
@@ -420,8 +502,9 @@ template<class T>
 void assign_range(const T value) {
   // ex test
   {
-    stl::_vector<T> stl_vector(100, value);
-    my::vector_<T> my_vector(100, value);
+    stl::_vector<T> stl_vector(100);
+    my::vector_<T> my_vector(100);
+    init_vector(my_vector, stl_vector);
     assign_range_ex(value, stl_vector.rbegin(), stl_vector.rend());
     assign_range_ex(value, stl_vector.begin(), stl_vector.end());
     assign_range_ex(value, stl_vector.rend(), stl_vector.rbegin());
@@ -433,14 +516,18 @@ void assign_range(const T value) {
   }
   // capacity < count
   {
-    stl::_vector<T> stl_vector(5, value);
-    my::vector_<T> my_vector(5, value);
+    stl::_vector<T> stl_vector(5);
+    my::vector_<T> my_vector(5);
+    init_vector(my_vector, stl_vector);
     assign_range_test<T>(my_vector, stl_vector, value);
   }
   // capacity >= count
   {
-    stl::_vector<T> stl_vector(20000, value);
-    my::vector_<T> my_vector(20000, value);
+    stl::_vector<T> stl_vector(20);
+    my::vector_<T> my_vector(20);
+    init_vector(my_vector, stl_vector);
+    stl_vector.reserve(20000);
+    my_vector.reserve(20000);
     assign_range_test<T>(my_vector, stl_vector, value);
   }
 }
@@ -449,7 +536,6 @@ TEST(vector, assign_range) {
   assign_range<A>(4);
   assign_range<int>(4);
   assign_range<char>(2);
-  assign_range<std::string>(std::string("vector"));
 }
 // -----------------------------------------------------------------------------
 
@@ -466,8 +552,10 @@ void assign_initializer_list(const T value, std::initializer_list<T> l) {
   }
   // capacity >= count
   {
-    stl::_vector<T> stl_vector(20000, value);
-    my::vector_<T> my_vector(20000, value);
+    stl::_vector<T> stl_vector(20, value);
+    my::vector_<T> my_vector(20, value);
+    stl_vector.reserve(20000);
+    my_vector.reserve(20000);
     stl_vector.assign(l);
     my_vector.assign(l);
     compare_vector<T>(my_vector, stl_vector);
@@ -701,18 +789,23 @@ template<class T, typename... Args>
 void emplace(const T value, Args&&... args) {
   // capacity < count
   {
-    stl::_vector<T> stl_vector(5, value);
-    my::vector_<T> my_vector(5, value);
+    stl::_vector<T> stl_vector(5);
+    my::vector_<T> my_vector(5);
+    init_vector(my_vector, stl_vector);
     stl_vector.emplace(stl_vector.begin() + 1, std::forward<Args>(args) ...);
     my_vector.emplace(my_vector.begin() + 1, std::forward<Args>(args) ...);
+    compare_vector<T>(my_vector, stl_vector);
+    stl_vector.emplace(stl_vector.begin() + 1, value);
+    my_vector.emplace(my_vector.begin() + 1, value);
     compare_vector<T>(my_vector, stl_vector);
   }
   // capacity >= count
   {
-    stl::_vector<T> stl_vector(200, value);
+    stl::_vector<T> stl_vector(200);
     stl_vector.reserve(1000);
-    my::vector_<T> my_vector(200, value);
+    my::vector_<T> my_vector(200);
     my_vector.reserve(1000);
+    init_vector(my_vector, stl_vector);
     stl_vector.emplace(stl_vector.end() - 2, std::forward<Args>(args) ...);
     my_vector.emplace(my_vector.end() - 2, std::forward<Args>(args) ...);
     compare_vector<T>(my_vector, stl_vector);
@@ -733,6 +826,7 @@ TEST(vector, emplace) {
     {
       stl::_vector<A> stl_vector(20);
       my::vector_<A> my_vector(20);
+      compare_vector<A>(my_vector, stl_vector);
       stl_vector.emplace(stl_vector.end(), std::move(three_0));
       my_vector.emplace(my_vector.end(), std::move(three_1));
       compare_vector<A>(my_vector, stl_vector);
@@ -740,8 +834,9 @@ TEST(vector, emplace) {
     }
     // self
     {
-      stl::_vector<int> stl_vector(5, 1);
-      my::vector_<int> my_vector(5, 1);
+      stl::_vector<int> stl_vector(5);
+      my::vector_<int> my_vector(5);
+      compare_vector<int>(my_vector, stl_vector);
       stl_vector.emplace(stl_vector.end(), stl_vector[2]);
       my_vector.emplace(my_vector.end(), my_vector[2]);
       compare_vector<int>(my_vector, stl_vector);
@@ -814,9 +909,10 @@ TEST(vector, end) {
 
 // ----------------------Remove element at given position.----------------------
 template<class T>
-void erase(int count, const T value) {
-  stl::_vector<T> stl_vector(count, value);
-  my::vector_<T> my_vector(count, value);
+void erase(int count) {
+  stl::_vector<T> stl_vector(count);
+  my::vector_<T> my_vector(count);
+  init_vector(my_vector, stl_vector);
   compare_vector<T>(my_vector, stl_vector);
   {
     stl_vector.erase(stl_vector.begin() + 1);
@@ -831,18 +927,19 @@ void erase(int count, const T value) {
 }
 
 TEST(vector, erase) {
-  erase<A>(13000, 4);
-  erase<int>(13, 4);
-  erase<char>(2, 4);
-  erase<std::string>(10, std::string("vector"));
+  erase<A>(13000);
+  erase<int>(13);
+  erase<char>(2);
+  erase<std::string>(10);
 }
 // -----------------------------------------------------------------------------
 
 // ------------------------Remove a range of elements.--------------------------
 template<class T>
-void erase_range(int count, const T value) {
-  stl::_vector<T> stl_vector(count, value);
-  my::vector_<T> my_vector(count, value);
+void erase_range(int count) {
+  stl::_vector<T> stl_vector(count);
+  my::vector_<T> my_vector(count);
+  init_vector(my_vector, stl_vector);
   compare_vector<T>(my_vector, stl_vector);
   {
     EXPECT_EQ(*stl_vector.erase(stl_vector.begin() + 1, stl_vector.end() - 1),
@@ -857,10 +954,10 @@ void erase_range(int count, const T value) {
 }
 
 TEST(vector, erase_range) {
-  erase_range<A>(13000, 4);
-  erase_range<int>(13, 4);
-  erase_range<char>(4, 4);
-  erase_range<std::string>(10, std::string("vector"));
+  erase_range<A>(13000);
+  erase_range<int>(13);
+  erase_range<char>(4);
+  erase_range<std::string>(10);
 }
 // -----------------------------------------------------------------------------
 
@@ -902,14 +999,18 @@ template<class T>
 void insert_pos(const T value) {
   // capacity < count
   {
-    stl::_vector<T> stl_vector(5, value);
-    my::vector_<T> my_vector(5, value);
+    stl::_vector<T> stl_vector(5);
+    my::vector_<T> my_vector(5);
+    init_vector(my_vector, stl_vector);
     insert_pos_test<T>(my_vector, stl_vector, value);
   }
   // capacity >= count
   {
-    stl::_vector<T> stl_vector(20000, value);
-    my::vector_<T> my_vector(20000, value);
+    stl::_vector<T> stl_vector(20);
+    my::vector_<T> my_vector(20);
+    init_vector(my_vector, stl_vector);
+    stl_vector.reserve(20000);
+    my_vector.reserve(20000);
     insert_pos_test<T>(my_vector, stl_vector, value);
   }
 }
@@ -978,6 +1079,9 @@ TEST(vector, insert_initializer_list) {
   {
     stl::_vector<int> stl_vector(200);
     my::vector_<int> my_vector(200);
+    init_vector(my_vector, stl_vector);
+    stl_vector.reserve(20000);
+    my_vector.reserve(20000);
     stl_vector.insert(stl_vector.begin() + 1, {1, 2, 43, 4});
     my_vector.insert(my_vector.begin() + 1, {1, 2, 43, 4});
     compare_vector<int>(my_vector, stl_vector);
@@ -1025,8 +1129,9 @@ void insert_pos_test_with_count(my::vector_<T> &my_vector,
 template<class T>
 void insert_pos_with_count_ex(const T value,
                               typename stl::_vector<T>::size_type count) {
-  my::vector_<T> my_vector(10, value);
-  stl::_vector<T> stl_vector(10, value);
+  my::vector_<T> my_vector(10);
+  stl::_vector<T> stl_vector(10);
+  init_vector(my_vector, stl_vector);
   try {
     stl_vector.insert(stl_vector.end(), count, value);
   } catch (std::exception const &ex) {
@@ -1050,16 +1155,18 @@ void insert_pos_with_count(const T value, int count) {
   }
   // capacity < count
   {
-    stl::_vector<T> stl_vector(5, value);
-    my::vector_<T> my_vector(5, value);
+    stl::_vector<T> stl_vector(5);
+    my::vector_<T> my_vector(5);
+    init_vector(my_vector, stl_vector);
     insert_pos_test_with_count<T>(my_vector, stl_vector, count, value);
   }
   // capacity >= count
   {
-    stl::_vector<T> stl_vector(20, value);
+    stl::_vector<T> stl_vector(20);
     stl_vector.reserve(30000);
-    my::vector_<T> my_vector(20, value);
+    my::vector_<T> my_vector(20);
     my_vector.reserve(30000);
+    init_vector(my_vector, stl_vector);
     insert_pos_test_with_count<T>(my_vector, stl_vector, count, value);
   }
 }
@@ -1126,6 +1233,7 @@ template<class T, typename InputIterator>
 void insert_range_ex(const T value, InputIterator first, InputIterator last) {
   my::vector_<T> my_vector(10, value);
   stl::_vector<T> stl_vector(10, value);
+  init_vector(my_vector, stl_vector);
   try {
     my_vector.insert(my_vector.end(), first, last);
   } catch (std::exception const &ex) {
@@ -1143,8 +1251,9 @@ template<class T>
 void insert_range(const T value) {
   // ex test
   {
-    stl::_vector<T> stl_vector(100, value);
-    my::vector_<T> my_vector(100, value);
+    stl::_vector<T> stl_vector(100);
+    my::vector_<T> my_vector(100);
+    init_vector(my_vector, stl_vector);
     insert_range_ex(value, stl_vector.rbegin(), stl_vector.rend());
     insert_range_ex(value, stl_vector.begin(), stl_vector.end());
     insert_range_ex(value, stl_vector.rend(), stl_vector.rbegin());
@@ -1158,6 +1267,7 @@ void insert_range(const T value) {
   {
     stl::_vector<T> stl_vector(5);
     my::vector_<T> my_vector(5);
+    init_vector(my_vector, stl_vector);
     insert_range_test<T>(my_vector, stl_vector, value);
   }
   // capacity >= count
@@ -1166,6 +1276,7 @@ void insert_range(const T value) {
     stl_vector.reserve(20000);
     my::vector_<T> my_vector(10);
     my_vector.reserve(20000);
+    init_vector(my_vector, stl_vector);
     stl_vector.insert(stl_vector.end(), stl_vector.begin() + 2, stl_vector.end());
     my_vector.insert(my_vector.end(), my_vector.begin() + 2, my_vector.end());
     compare_vector<T>(my_vector, stl_vector);
@@ -1333,8 +1444,10 @@ void push_back_move(const T value, Args&&... args) {
   }
   // capacity >= count
   {
-    stl::_vector<T> stl_vector(20000, value);
-    my::vector_<T> my_vector(20000, value);
+    stl::_vector<T> stl_vector(20, value);
+    my::vector_<T> my_vector(20, value);
+    stl_vector.reserve(20000);
+    my_vector.reserve(20000);
     stl_vector.push_back(std::forward<Args>(args) ...);
     my_vector.push_back(std::forward<Args>(args) ...);
     compare_vector<T>(my_vector, stl_vector);
@@ -1463,9 +1576,10 @@ TEST(vector, rend) {
 
 // ----Attempt to preallocate enough memory for specified number of elements.---
 template<class T>
-void reserve(int size, const T value) {
-  stl::_vector<T> stl_vector(size, value);
-  my::vector_<T> my_vector(size, value);
+void reserve(int size) {
+  stl::_vector<T> stl_vector(size);
+  my::vector_<T> my_vector(size);
+  init_vector(my_vector, stl_vector);
   // reserve n > capacity
   stl_vector.reserve(1000);
   my_vector.reserve(1000);
@@ -1479,6 +1593,7 @@ void reserve(int size, const T value) {
 TEST(vector, reserve) {
   stl::_vector<int> stl_vector(2, 0);
   my::vector_<int> my_vector(2, 0);
+  init_vector(my_vector, stl_vector);
   // reserve n < 0
   try {
     stl_vector.reserve(-1);
@@ -1493,10 +1608,10 @@ TEST(vector, reserve) {
         "allocator<T>::allocate(size_t n) 'n' exceeds maximum supported size"));
   }
   compare_vector<int>(my_vector, stl_vector);
-  reserve<A>(100, 2);
-  reserve<int>(200, 2);
-  reserve<char>(30, 2);
-  reserve<std::string>(1, std::string("42"));
+  reserve<A>(100);
+  reserve<int>(200);
+  reserve<char>(30);
+  reserve<std::string>(1);
 }
 // -----------------------------------------------------------------------------
 
@@ -1504,9 +1619,10 @@ TEST(vector, reserve) {
 
 // -------Resizes the vector to the specified number of elements.---------------
 template<class T>
-void resize(int size, const T value) {
-  stl::_vector<T> stl_vector(size, value);
-  my::vector_<T> my_vector(size, value);
+void resize(int size) {
+  stl::_vector<T> stl_vector(size);
+  my::vector_<T> my_vector(size);
+  init_vector(my_vector, stl_vector);
   // resize n > size
   stl_vector.resize(1000);
   my_vector.resize(1000);
@@ -1518,8 +1634,9 @@ void resize(int size, const T value) {
 }
 
 TEST(vector, resize) {
-  stl::_vector<int> stl_vector(2, 0);
-  my::vector_<int> my_vector(2, 0);
+  stl::_vector<int> stl_vector(2);
+  my::vector_<int> my_vector(2);
+  init_vector(my_vector, stl_vector);
   // resize n < 0
   try {
     stl_vector.resize(-1);
@@ -1532,10 +1649,10 @@ TEST(vector, resize) {
     EXPECT_EQ(ex.what(),std::string("vector"));
   }
   compare_vector<int>(my_vector, stl_vector);
-  resize<A>(100, 2);
-  resize<int>(200, 2);
-  resize<char>(30, 2);
-  resize<std::string>(1, std::string("42"));
+  resize<A>(100);
+  resize<int>(200);
+  resize<char>(30);
+  resize<std::string>(1);
 }
 // -----------------------------------------------------------------------------
 
@@ -1544,6 +1661,7 @@ template<class T>
 void resize_value(int size, const T value) {
   stl::_vector<T> stl_vector(size);
   my::vector_<T> my_vector(size);
+  init_vector(my_vector, stl_vector);
   // value
   {
     // resize n > size
@@ -1674,14 +1792,18 @@ void emplace_back(const T value, Args&&... args) {
   {
     stl::_vector<T> stl_vector(5, value);
     my::vector_<T> my_vector(5, value);
+    init_vector(my_vector, stl_vector);
     stl_vector.emplace_back(std::forward<Args>(args) ...);
     my_vector.emplace_back(std::forward<Args>(args) ...);
     compare_vector<T>(my_vector, stl_vector);
   }
   // capacity >= count
   {
-    stl::_vector<T> stl_vector(20000, value);
-    my::vector_<T> my_vector(20000, value);
+    stl::_vector<T> stl_vector(20);
+    my::vector_<T> my_vector(20);
+    init_vector(my_vector, stl_vector);
+    stl_vector.reserve(20000);
+    my_vector.reserve(20000);
     stl_vector.emplace_back(std::forward<Args>(args) ...);
     my_vector.emplace_back(std::forward<Args>(args) ...);
     compare_vector<T>(my_vector, stl_vector);

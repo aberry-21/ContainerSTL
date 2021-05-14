@@ -733,6 +733,7 @@ void vector<T, Alloc>::assign(InputIterator first,
       new_storage.size_), attributes_);
     } catch (...) {
       attributes_ = std::move(copy_vector.attributes_);
+      throw;
     }
   }
   destroy_storage(new_storage, 0);
@@ -838,11 +839,18 @@ void vector<T, Alloc>::append_value_end(vector::field &storage,
 template<class T, class Alloc>
 void vector<T, Alloc>::move_range(vector::iterator position,
                                   vector::size_type n) {
-  iterator last = end() - 1;
-  --position;
-  for (;last != position; --last, --n) {
-    std::swap(*last, attributes_.data_[attributes_.size_ + n - 1]);
+  for (size_type i = 0; i < n; ++i) {
+    try {
+      attributes_.alloc_.construct(attributes_.data_ + attributes_.size_ + i,
+      std::move_if_noexcept(attributes_.data_[attributes_.size_ + i - 1]));
+    } catch (...) {
+      for (; i > 0; --i) {
+        attributes_.alloc_.destroy(attributes_.data_ + attributes_.size_ + i);
+        throw;
+      }
+    }
   }
+  std::move_backward(position, end() - 1, end() + n - 1);
 }
 
 template<class T, class Alloc>
@@ -878,9 +886,15 @@ typename vector<T, Alloc>::iterator vector<T, Alloc>::insert(
     return (iterator(p));
   }
   if (attributes_.capacity_ >= attributes_.size_ + n) {
-    append_value_end(attributes_, n, x);
-    if (position != end()) {
+    if (position == end()) {
+      append_value_end(attributes_, n, x);
+    } else {
+      value_type copy_value(x);
       move_range(iterator(p), n);
+      iterator iter = iterator(p);
+      for (size_type i = 0; i < n; ++i, ++iter) {
+        *iter = copy_value;
+      }
     }
   } else {
     field new_storage(nullptr, attributes_.size_, get_new_capacity(n),
@@ -929,12 +943,20 @@ typename vector<T, Alloc>::iterator vector<T, Alloc>::insert(
                                       InputIterator>::is_specialized>::type *) {
   pointer p = attributes_.data_ + (position - begin());
   difference_type n = std::distance(first, last);
-  if (!n) return iterator(p);
+  if (n < 1) {
+    return iterator(p);
+  }
   if (attributes_.size_ + n > max_size()) throw ft::length_error("vector");
   if (attributes_.capacity_ >= attributes_.size_ + n) {
-    append_range_end(attributes_, n, first);
-    if (position != end()) {
+    if (position == end()) {
+      append_range_end(attributes_, n, first);
+    } else {
+      vector copy_v(first, last);
       move_range(iterator(p), n);
+      iterator iter = iterator(p);
+      for (size_type i = 0; i < copy_v.size(); ++i, ++iter) {
+        *iter = copy_v[i];
+      }
     }
   } else {
     field new_storage(nullptr, attributes_.size_, get_new_capacity(n),
@@ -1000,15 +1022,18 @@ typename vector<T, Alloc>::iterator vector<T, Alloc>::emplace(
   if (attributes_.size_ + 1 > max_size()) throw ft::length_error("vector");
   pointer p = attributes_.data_ + (position - begin());
   if (attributes_.capacity_ >= attributes_.size_ + 1) {
-    try {
-      attributes_.alloc_.construct(attributes_.data_ + attributes_.size_,
-                                   std::forward<Args>(args) ...);
-    } catch (...) {
-      attributes_.alloc_.destroy(attributes_.data_ + attributes_.size_);
-      throw;
-    }
-    if (position != end()) {
+    if (position == end()) {
+      try {
+        attributes_.alloc_.construct(attributes_.data_ + attributes_.size_,
+                                     std::forward<Args>(args) ...);
+      } catch (...) {
+        attributes_.alloc_.destroy(attributes_.data_ + attributes_.size_);
+        throw;
+      }
+    } else {
+      value_type copy_value(args ...);
       move_range(iterator(p), 1);
+      *p = copy_value;
     }
   } else {
     field new_storage(nullptr, attributes_.size_, get_new_capacity(1),
