@@ -5,17 +5,17 @@ project(ft_containers VERSION 1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 11)
 
 add_compile_options(
-#    -Werror
-#    -Wall
-#    -Wextra
+    -Werror
+    -Wall
+    -Wextra
 )
 
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -g")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -g")
 
 set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
 
 add_executable(${PROJECT_NAME}  tools/memory.h tools/exception.h tools/profile.h
-                                main.cc vector/vector.h vector/random_access_iterator.h tools/utility.h tools/reverse_iterator.h)
+                                main.cc vector/vector.h vector/random_access_iterator.h tools/utility.h tools/reverse_iterator.h list/list.h "list/bidirectional_iterator.h" list/list_base.h)
 
 target_include_directories(${PROJECT_NAME} PUBLIC .)
