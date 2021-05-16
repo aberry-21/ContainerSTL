@@ -99,7 +99,8 @@ bool operator==(const A& a, const A& b) {
 }
 
 int main() {
-  std::vector<int> vec(10, 6);
+  ft::vector<int> vec(10, 6);
+  vec.insert(vec.begin(), 1);
 //  {
 //    ft::list<int> lst;
 //    std::cout << ( lst.begin() == lst.end() )<< std::endl;
@@ -107,18 +108,30 @@ int main() {
 //    std::cout << ( std_lst.begin() == std_lst.end() )<< std::endl;
 //  }
   {
-    ft::list<int> my_lst(vec.begin(), vec.end());
-    ft::list<int> my_lst_new(my_lst);
-    std::list<int> std_lst(vec.begin(), vec.end());
-    std::list<int> std_lst_new(std_lst);
-    for (const auto &item : std_lst_new) {
-      std::cout << item << std::endl;
+//    ft::list<int> my_lst(vec.begin(), vec.end());
+//    ft::list<int> my_lst_new(my_lst);
+//    std::list<int> std_lst(vec.begin(), vec.end());
+//    std::list<int> std_lst_new(std_lst);
+//    for (const auto &item : std_lst_new) {
+//      std::cout << item << std::endl;
+//    }
+//    std::cout << "___________________________" << std::endl;
+//    for (const auto &item : my_lst_new) {
+//      std::cout << item << std::endl;
+//    }
+  }
+  {
+    ft::list<int> my_lst;
+    for (int i = 0; i < 3; ++i) {
+      my_lst.push_back(i);
     }
-    std::cout << "___________________________" << std::endl;
-    for (const auto &item : my_lst_new) {
+    my_lst = {-1, -2, 3, 5, 6, 7, 8};
+    my_lst.resize(10, -1);
+    for (const auto &item : my_lst) {
       std::cout << item << std::endl;
     }
   }
+
 
 
 }

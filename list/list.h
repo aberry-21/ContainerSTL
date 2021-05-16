@@ -1,5 +1,5 @@
 // -*- C++ -*-
-//===------------------------------ vector --------------------------------===//
+//===------------------------------- list ---------------------------------===//
 //
 //                     Created by Aaron Berry on 5/14/21.
 //
@@ -43,78 +43,79 @@ class list {
   inline explicit list(size_type n, const allocator_type& a = allocator_type());
   inline list(size_type n, const value_type& value, const allocator_type& a = allocator_type());
   template <class Iter>
-  list(Iter first, Iter last, const allocator_type& a = allocator_type());
-  list(const list& list, const allocator_type& a = allocator_type());
-  list(list&& x)
+  inline list(Iter first, Iter last, const allocator_type& a = allocator_type());
+  inline list(const list& list, const allocator_type& a = allocator_type());
+  inline list(list&& x)
   noexcept(is_nothrow_move_constructible<allocator_type>::value);
-  list(list&& x, const allocator_type& a);
-  list(initializer_list<value_type> l, const allocator_type& a);
-  ~list();
+  inline list(list&& x, const allocator_type& a);
+  inline list(initializer_list<value_type> l, const allocator_type& a = allocator_type());
+  inline virtual ~list();
+  inline list& operator=(const list& x);
+  inline list& operator=(list&& x)
+  noexcept(
+  allocator_type::propagate_on_container_move_assignment::value &&
+      is_nothrow_move_assignable<allocator_type>::value);
+  inline list& operator=(initializer_list<value_type>);
+  template <class Iter>
+  inline void assign(Iter first, Iter last);
+  inline void assign(size_type n, const value_type& t);
+  inline void assign(initializer_list<value_type>);
 
-//  list& operator=(const list& x);
-//  list& operator=(list&& x)
-//  noexcept(
-//  allocator_type::propagate_on_container_move_assignment::value &&
-//      is_nothrow_move_assignable<allocator_type>::value);
-//  list& operator=(initializer_list<value_type>);
-//  template <class Iter>
-//  void assign(Iter first, Iter last);
-//  void assign(size_type n, const value_type& t);
-//  void assign(initializer_list<value_type>);
-//
-//  allocator_type get_allocator() const noexcept;
-//
+  inline allocator_type get_allocator() const noexcept;
+
   inline iterator begin() noexcept;
   inline const_iterator begin() const noexcept;
   inline iterator end() noexcept;
   inline const_iterator end() const noexcept;
-//  inline reverse_iterator rbegin() noexcept;
-//  inline const_reverse_iterator rbegin() const noexcept;
-//  inline reverse_iterator rend() noexcept;
-//  inline const_reverse_iterator rend() const noexcept;
-//  inline const_iterator cbegin() const noexcept;
-//  inline const_iterator cend() const noexcept;
-//  inline const_reverse_iterator crbegin() const noexcept;
-//  inline const_reverse_iterator crend() const noexcept;
-//
-//  inline reference front();
-//  inline const_reference front() const;
-//  inline reference back();
-//  inline const_reference back() const;
-//
-//  bool empty() const noexcept;
-//  size_type size() const noexcept;
-//  size_type max_size() const noexcept;
-//
-//  template <class... Args>
-//  void emplace_front(Args&&... args);
-//  void pop_front();
-//  template <class... Args>
-//  void emplace_back(Args&&... args);
-//  void pop_back();
-//  void push_front(const value_type& x);
-//  void push_front(value_type&& x);
+  inline reverse_iterator rbegin() noexcept;
+  inline const_reverse_iterator rbegin() const noexcept;
+  inline reverse_iterator rend() noexcept;
+  inline const_reverse_iterator rend() const noexcept;
+  inline const_iterator cbegin() const noexcept;
+  inline const_iterator cend() const noexcept;
+  inline const_reverse_iterator crbegin() const noexcept;
+  inline const_reverse_iterator crend() const noexcept;
+
+  inline reference front();
+  inline const_reference front() const;
+  inline reference back();
+  inline const_reference back() const;
+
+  inline bool empty() const noexcept;
+  inline size_type size() const noexcept;
+  inline size_type max_size() const noexcept;
+
+  template <class... Args>
+  inline void emplace_front(Args&&... args);
+  void pop_front();
+  template <class... Args>
+  void emplace_back(Args&&... args);
+  void pop_back();
+  void push_front(const value_type& x);
+  void push_front(value_type&& x);
   inline void push_back(const value_type& x);
   inline void push_back(value_type&& x);
-//  template <class... Args>
-//  iterator emplace(const_iterator position, Args&&... args);
-//  iterator insert(const_iterator position, const value_type& x);
-//  iterator insert(const_iterator position, value_type&& x);
-//  iterator insert(const_iterator position, size_type n, const value_type& x);
-//  template <class Iter>
-//  iterator insert(const_iterator position, Iter first, Iter last);
-//  iterator insert(const_iterator position, initializer_list<value_type> il);
-//
-//  iterator erase(const_iterator position);
-//  iterator erase(const_iterator position, const_iterator last);
-//
-//  void resize(size_type sz);
-//  void resize(size_type sz, const value_type& c);
-//
-//  void swap(list&)
-//  noexcept(allocator_traits<allocator_type>::is_always_equal::value);
-//  void clear() noexcept;
-//
+  template <class... Args>
+  iterator emplace(const_iterator position, Args&&... args);
+  iterator insert(const_iterator position, const value_type& x);
+  iterator insert(const_iterator position, value_type&& x);
+  iterator insert(const_iterator position, size_type n, const value_type& x);
+  template <class Iter>
+  iterator insert(const_iterator position, Iter first, Iter last,
+                  typename std::enable_if
+      <!std::numeric_limits<Iter>::is_specialized>::type * = 0);
+  iterator insert(const_iterator position, initializer_list<value_type> il);
+
+  iterator erase(const_iterator position);
+  iterator erase(const_iterator first, const_iterator last);
+
+  void resize(size_type sz);
+  void resize(size_type sz, const value_type& c);
+
+  void swap(list&)
+  noexcept(allocator_traits<allocator_type>::is_always_equal::value);
+  inline void clear() noexcept;
+
 //  void splice(const_iterator position, list& x);
 //  void splice(const_iterator position, list&& x);
 //  void splice(const_iterator position, list& x, const_iterator i);
@@ -143,11 +144,19 @@ class list {
  private:
   list_base<T, Alloc> head_;
   ft::Allocator<T>    alloc_;
-  void link_node(list_node<T> *p);
+
+  void link_node_back(list_node<T> *p);
+  void link_node_front(list_node<T> *p);
   list_node<T> *create_node_without_value();
   list_node<T> *create_node_with_lvalue(const value_type& x);
   template<typename... Args>
   list_node<T> *create_node_with_args(Args &&... args);
+  void unlink_node(list_node<T> *p);
+  void delete_node(list_node<T> *p);
+  void link_node(const_iterator position, list_node<T> *p);
+  void default_append(size_type n);
+  void value_append(size_type n, const value_type& x);
+  void erase_at_end(const_iterator position);
 };
 
 template<class T, class Alloc>
@@ -163,7 +172,7 @@ template<class T, class Alloc>
 list<T, Alloc>::list(list::size_type n, const allocator_type &a) : alloc_(a){
   for (size_type i = 0; i < n; ++i) {
     list_node<T> *p = create_node_without_value();
-    link_node(p);
+    link_node_back(p);
   }
 }
 
@@ -207,13 +216,13 @@ list_node<T> *list<T, Alloc>::create_node_with_args(Args &&... args) {
 template<class T, class Alloc>
 void list<T, Alloc>::push_back(const value_type &x) {
   list_node<T> *p = create_node_with_lvalue(x);
-  link_node(p);
+  link_node_back(p);
 }
 
 template<class T, class Alloc>
 void list<T, Alloc>::push_back(value_type &&x) {
   list_node<T> *p = create_node_with_rvalue(std::forward<T>(x));
-  link_node(p);
+  link_node_back(p);
 }
 
 template<class T, class Alloc>
@@ -226,12 +235,32 @@ list<T, Alloc>::list(list::size_type n,
 }
 
 template<class T, class Alloc>
-void list<T, Alloc>::link_node(list_node<T> *p) {
-  head_.prev_->next_ = p;
-  p->prev_ = head_.prev_;
-  head_.prev_ = p;
-  p->next_ = &head_;
-  head_.size_++;
+void list<T, Alloc>::unlink_node(list_node<T> *p) {
+  p->prev_->next_ = p->next_;
+  p->next_->prev_ = p->prev_;
+  --head_.size_;
+}
+
+
+template<class T, class Alloc>
+void list<T, Alloc>::link_node_back(list_node<T> *p) {
+  link_node(cend(), p);
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::link_node_front(list_node<T> *p) {
+  link_node(cbegin(), p);
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::link_node(list::const_iterator position
+                                       , list_node<T> *p) {
+  auto pos = position.base();
+  p->next_ = pos;
+  p->prev_ = pos->prev_;
+  pos->prev_->next_ = p;
+  pos->prev_ = p;
+  ++head_.size_;
 }
 
 template<class T, class Alloc>
@@ -241,7 +270,7 @@ typename list<T, Alloc>::iterator list<T, Alloc>::begin() noexcept {
 
 template<class T, class Alloc>
 typename list<T, Alloc>::const_iterator list<T, Alloc>::begin() const noexcept {
-  return const_iterator(static_cast<list_node<const T> *>(head_.next_));
+  return const_iterator(static_cast<list_node<T> *>(head_.next_));
 }
 
 template<class T, class Alloc>
@@ -251,7 +280,7 @@ typename list<T, Alloc>::iterator list<T, Alloc>::end() noexcept {
 
 template<class T, class Alloc>
 typename list<T, Alloc>::const_iterator list<T, Alloc>::end() const noexcept {
-  return const_iterator(static_cast<list_node<const T> *>(head_.prev_->next_));
+  return const_iterator(static_cast<list_node<T> *>(head_.prev_->next_));
 }
 
 template<class T, class Alloc>
@@ -274,12 +303,20 @@ list<T, Alloc>::list(const list &list, const allocator_type &a) : alloc_(a) {
 template<class T, class Alloc>
 list<T, Alloc>::list(list &&x) noexcept(is_nothrow_move_constructible<
     allocator_type>::value) {
-  (void)x;//splice
+  head_.next_ = x.head_.next_;
+  head_.prev_ = x.head_.prev_;
+  head_.size_ = x.head_.size_;
+  x.head_.size_ = 0;
+  x.head_.prev_ = x.head_.next_ = &x.head_;
 }
 
 template<class T, class Alloc>
 list<T, Alloc>::list(list &&x, const allocator_type &a) : alloc_(a) {
-  (void)x;//splice
+  head_.next_ = x.head_.next_;
+  head_.prev_ = x.head_.prev_;
+  head_.size_ = x.head_.size_;
+  x.head_.size_ = 0;
+  x.head_.prev_ = x.head_.next_ = &x.head_;
 }
 
 template<class T, class Alloc>
@@ -295,17 +332,356 @@ list<T, Alloc>::list(initializer_list<value_type> l, const allocator_type &a)
 //TODO
 template<class T, class Alloc>
 list<T, Alloc>::~list() {
-  auto first = begin();
+  clear();
+}
+
+template<class T, class Alloc>
+list<T, Alloc> &list<T, Alloc>::operator=(const list &x) {
+  if (this == &x) {
+    return *this;
+  }
+  clear();
+  auto first = x.begin();
+  auto last = x.end();
+  for (; first != last; ++first) {
+    push_back(*first);
+  }
+  return *this;
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::clear() noexcept {
+//  auto first = begin();
+//  auto last = end();
+//  for (; first != last; ++first) {
+//    alloc_.destroy(&*first);
+//  }
+//  first = ++begin();
+//  ++last;
+//  for (; first != last; ++first) {
+//    auto iter = first;
+//    --iter;
+//    head_.put_node(iter.base());
+//  }
+//  head_.next_ = head_.prev_ = &head_;
+  erase_at_end(begin());
+  head_.size_ = 0;
+}
+
+//TODO maybe add swap in head class
+template<class T, class Alloc>
+list<T, Alloc> &list<T, Alloc>::operator=(list &&x) noexcept(
+allocator_type::propagate_on_container_move_assignment::value &&
+    is_nothrow_move_assignable<allocator_type>::value) {
+  clear();
+  head_.size_ = x.head_.size_;
+  head_.next_ = x.head_.next_;
+  head_.prev_ = x.head_.prev_;
+  x.head_.prev_ = x.head_.next_ = &x.head_;
+  x.head_.size_ = 0;
+  return *this;
+}
+
+template<class T, class Alloc>
+list<T, Alloc> &list<T, Alloc>::operator=(initializer_list<value_type> l) {
+  clear();
+  auto first = l.begin();
+  auto last = l.end();
+  for (; first != last; ++first) {
+    push_back(*first);
+  }
+  return *this;
+}
+
+template<class T, class Alloc>
+template<class Iter>
+void list<T, Alloc>::assign(Iter first, Iter last) {
+  list<T, Alloc> l(std::move(*this));
+  for (; first != last; ++first) {
+    push_back(*first);
+  }
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::assign(list::size_type n, const value_type &t) {
+  list<T, Alloc> l(std::move(*this));
+  for (size_type i = 0; i < n; ++i) {
+    push_back(t);
+  }
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::assign(initializer_list<value_type> l) {
+  *this = l;
+}
+
+template<class T, class Alloc>
+typename list<T, Alloc>::allocator_type list<T, Alloc>
+    ::get_allocator() const noexcept {
+  return alloc_;
+}
+
+template<class T, class Alloc>
+typename list<T, Alloc>::reverse_iterator list<T, Alloc>::rbegin() noexcept {
+  return reverse_iterator(end());
+}
+
+template<class T, class Alloc>
+typename list<T, Alloc>::const_reverse_iterator list<T, Alloc>::rbegin() const noexcept {
+  return const_reverse_iterator(end());
+}
+
+template<class T, class Alloc>
+typename list<T, Alloc>::reverse_iterator list<T, Alloc>::rend() noexcept {
+  return reverse_iterator(begin());
+}
+
+template<class T, class Alloc>
+typename list<T, Alloc>::const_reverse_iterator list<T, Alloc>::rend() const noexcept {
+  return const_reverse_iterator(begin());
+}
+
+template<class T, class Alloc>
+typename list<T, Alloc>::const_iterator list<T, Alloc>::cbegin() const noexcept {
+  return begin();
+}
+
+template<class T, class Alloc>
+typename list<T, Alloc>::const_iterator list<T, Alloc>::cend() const noexcept {
+  return end();
+}
+
+template<class T, class Alloc>
+typename list<T, Alloc>::const_reverse_iterator list<T, Alloc>::crbegin() const noexcept {
+  return rbegin();
+}
+
+template<class T, class Alloc>
+typename list<T, Alloc>::const_reverse_iterator list<T, Alloc>::crend() const noexcept {
+  return rend();
+}
+
+template<class T, class Alloc>
+typename list<T, Alloc>::reference list<T, Alloc>::front() {
+  return static_cast<list_node<T> *>(head_.next_)->data_;
+}
+
+//TODO maybe const T
+template<class T, class Alloc>
+typename list<T, Alloc>::const_reference list<T, Alloc>::front() const {
+  return static_cast<list_node<T> *>(head_.next_)->data_;
+}
+
+template<class T, class Alloc>
+typename list<T, Alloc>::reference list<T, Alloc>::back() {
+  return static_cast<list_node<T> *>(head_.prev_)->data_;
+}
+
+template<class T, class Alloc>
+typename list<T, Alloc>::const_reference list<T, Alloc>::back() const {
+  return static_cast<list_node<T> *>(head_.prev_)->data_;
+}
+
+template<class T, class Alloc>
+bool list<T, Alloc>::empty() const noexcept {
+  return head_.size_ == 0;
+}
+
+template<class T, class Alloc>
+typename list<T, Alloc>::size_type list<T, Alloc>::size() const noexcept {
+  return head_.size_;
+}
+
+template<class T, class Alloc>
+typename list<T, Alloc>::size_type list<T, Alloc>::max_size() const noexcept {
+  return std::min<size_type>(alloc_.max_size(),
+                             std::numeric_limits<difference_type>::max());
+}
+
+template<class T, class Alloc>
+template<class... Args>
+void list<T, Alloc>::emplace_front(Args &&... args) {
+  auto node = create_node_with_args(std::forward<T>(args) ...);
+  link_node_front(node);
+}
+
+
+
+template<class T, class Alloc>
+void list<T, Alloc>::pop_front() {
+  delete_node(static_cast<list_node<T> *>(head_.next_));
+}
+
+template<class T, class Alloc>
+template<class... Args>
+void list<T, Alloc>::emplace_back(Args &&... args) {
+  auto node = create_node_with_args(std::forward<T>(args) ...);
+  link_node_back(node);
+}
+template<class T, class Alloc>
+void list<T, Alloc>::pop_back() {
+  delete_node(static_cast<list_node<T> *>(head_.prev_));
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::delete_node(list_node<T> *p) {
+  auto front_node = p;
+  unlink_node(front_node);
+  alloc_.destroy(&front_node->data_);
+  head_.put_node(front_node);
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::push_front(const value_type &x) {
+  list_node<T> *p = create_node_with_lvalue(x);
+  link_node_front(p);
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::push_front(value_type &&x) {
+  list_node<T> *p = create_node_with_rvalue(std::forward<T>(x));
+  link_node_front(p);
+}
+
+template<class T, class Alloc>
+template<class... Args>
+typename list<T, Alloc>::iterator list<T, Alloc>::emplace(
+                                       list::const_iterator position,
+                                       Args &&... args) {
+  auto node = create_node_with_args(std::forward<T>(args) ...);
+  link_node(position, node);
+  return iterator(node);
+}
+
+template<class T, class Alloc>
+typename list<T, Alloc>::iterator list<T, Alloc>::insert(
+                                      list::const_iterator position,
+                                      const value_type &x) {
+  insert(position, 1, x);
+}
+
+template<class T, class Alloc>
+typename list<T, Alloc>::iterator list<T, Alloc>::insert(
+                                      list::const_iterator position,
+                                      value_type &&x) {
+  auto node = create_node_with_args(std::move_if_noexcept(x));
+  link_node(position, node);
+  return iterator(node);
+}
+
+template<class T, class Alloc>
+typename list<T, Alloc>::iterator list<T, Alloc>::insert(
+                                      list::const_iterator position,
+                                      list::size_type n,
+                                      const value_type &x) {
+  for (; n > 0; --n) {
+    auto node = create_node_with_lvalue(x);
+    link_node(position, node);
+  }
+  return iterator(--position);
+}
+
+template<class T, class Alloc>
+template<class Iter>
+typename list<T, Alloc>::iterator list<T, Alloc>::insert(
+                                      list::const_iterator position,
+                                      Iter first,
+                                      Iter last,
+typename std::enable_if
+    <!std::numeric_limits<Iter>::is_specialized>::type *) {
+  for (; first != last; ++first) {
+    auto node = create_node_with_lvalue(*first);
+    link_node(position, node);
+  }
+  return iterator(--position);
+}
+
+template<class T, class Alloc>
+typename list<T, Alloc>::iterator list<T, Alloc>::insert(
+                                      list::const_iterator position,
+                                      initializer_list<value_type> il) {
+  return insert(position, il.begin(), il.end());
+}
+
+template<class T, class Alloc>
+typename list<T, Alloc>::iterator list<T, Alloc>::erase(
+                                              list::const_iterator position) {
+  return erase(position, ++position);
+}
+
+template<class T, class Alloc>
+typename list<T, Alloc>::iterator list<T, Alloc>::erase(
+                                     list::const_iterator first,
+                                     list::const_iterator last) {
+  for (; first != last; ++first) {
+    delete_node(first.base());
+  }
+  return iterator(last);
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::default_append(list::size_type n) {
+  for (; n > 0; --n) {
+    list_node<T> *p = create_node_without_value();
+    link_node_back(p);
+  }
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::value_append(list::size_type n, const value_type &x) {
+  for (; n > 0; --n) {
+    list_node<T> *p = create_node_with_lvalue(x);
+    link_node_back(p);
+  }
+}
+
+//[pos;end())
+template<class T, class Alloc>
+void list<T, Alloc>::erase_at_end(const_iterator position) {
+  auto first = position;
   auto last = end();
   for (; first != last; ++first) {
     alloc_.destroy(&*first);
   }
-  first = ++begin();
+  first = ++iterator(position);
+  --position;
+  ++last;
   for (; first != last; ++first) {
     auto iter = first;
     --iter;
     head_.put_node(iter.base());
   }
+  position.base()->next_ = &head_;
+  head_.prev_ = position.base();
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::resize(list::size_type sz) {
+  if (sz > head_.size_) {
+    default_append(sz - head_.size_);
+  } else if (sz < head_.size_) {
+    const_iterator iter = begin();
+    std::advance(iter, sz);
+    erase_at_end(iter);
+  }
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::resize(list::size_type sz, const value_type &c) {
+  if (sz > head_.size_) {
+    value_append(sz - head_.size_, c);
+  } else if (sz < head_.size_) {
+    const_iterator iter = begin();
+    std::advance(iter, sz);
+    erase_at_end(iter);
+  }
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::swap(list &l)
+noexcept(allocator_traits<allocator_type>::is_always_equal::value) {
+  (void)l;
+  //swap head node
 }
 
 }

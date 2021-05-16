@@ -466,7 +466,7 @@ vector<T, Alloc>::vector(const vector &&x,
     : attributes_(nullptr, 0, 0, alloc) {
   std::swap(attributes_.data_, x.attributes_.data_);
   std::swap(attributes_.capacity_, x.attributes_.capacity_);
-  std::swap(attributes_.size_, x.attributes_.size_);
+  std::swap(attributes_.rbeginsize_, x.attributes_.size_);
   std::swap(attributes_.alloc_, x.attributes_.alloc_);
 }
 template<class T, class Alloc>

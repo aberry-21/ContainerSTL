@@ -8,6 +8,7 @@
 
 namespace ft {
 template<class T>
+    //TODO refactor!
 class bidirectional_iterator {
  public:
   typedef T iterator_type;
@@ -19,7 +20,9 @@ class bidirectional_iterator {
 
   bidirectional_iterator() = default;
   ~bidirectional_iterator() = default;
-  explicit bidirectional_iterator(list_node<T> *node);
+  explicit bidirectional_iterator(list_node<value_type> *node);
+  inline bidirectional_iterator(bidirectional_iterator<value_type> const &other);
+  inline bidirectional_iterator(bidirectional_iterator<const value_type> const &other);
   bidirectional_iterator& operator=(const bidirectional_iterator& x);
   reference operator*();
   pointer operator->();
@@ -29,13 +32,13 @@ class bidirectional_iterator {
   bidirectional_iterator operator--(int);
   bool operator==(const bidirectional_iterator& x);
   bool operator!=(const bidirectional_iterator& x);
-  list_node<T> *base() const;
+  list_node<value_type> *base() const;
  private:
-  list_node<T> *node_;
+  list_node<value_type> *node_;
 };
 
 template<class T>
-bidirectional_iterator<T>::bidirectional_iterator(list_node<T> *node)
+bidirectional_iterator<T>::bidirectional_iterator(list_node<value_type> *node)
                           : node_(node) {}
 
 template<class T>
@@ -63,28 +66,28 @@ typename bidirectional_iterator<T>::pointer bidirectional_iterator<T>
 template<class T>
 bidirectional_iterator<T> bidirectional_iterator<T>
     ::operator++() {
-  node_ = static_cast<list_node<T> *>(node_->next_);
+  node_ = static_cast<list_node<value_type> *>(node_->next_);
   return *this;
 }
 
 template<class T>
 bidirectional_iterator<T> bidirectional_iterator<T>
     ::operator--() {
-  node_ = static_cast<list_node<T> *>(node_->prev_);
+  node_ = static_cast<list_node<value_type> *>(node_->prev_);
   return *this;
 }
 
 template<class T>
 bidirectional_iterator<T> bidirectional_iterator<T>::operator++(int) {
   bidirectional_iterator<T> tmp = *this;
-  node_ = static_cast<list_node<T> *>(node_->next_);
+  node_ = static_cast<list_node<value_type> *>(node_->next_);
   return tmp;
 }
 
 template<class T>
 bidirectional_iterator<T> bidirectional_iterator<T>::operator--(int) {
   bidirectional_iterator<T> tmp = *this;
-  node_ = static_cast<list_node<T> *>(node_->prev_);
+  node_ = static_cast<list_node<value_type> *>(node_->prev_);
   return tmp;
 }
 
@@ -99,8 +102,19 @@ bool bidirectional_iterator<T>::operator!=(const bidirectional_iterator &x) {
 }
 
 template<class T>
-list_node<T> *bidirectional_iterator<T>::base() const {
+list_node<typename bidirectional_iterator<T>::value_type>
+    *bidirectional_iterator<T>::base() const {
   return node_;
 }
+
+//TODO
+template<class T>
+bidirectional_iterator<T>::bidirectional_iterator(const bidirectional_iterator<
+    value_type> &other)  : node_(other.base()) {}
+
+template<class T>
+bidirectional_iterator<T>::bidirectional_iterator(
+    bidirectional_iterator<const value_type> const &other)
+    : node_(other.base()) {}
 
 }
