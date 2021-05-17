@@ -98,40 +98,35 @@ bool operator==(const A& a, const A& b) {
   return a.GetCount() == b.GetCount();
 }
 
-int main() {
-  ft::vector<int> vec(10, 6);
-  vec.insert(vec.begin(), 1);
-//  {
-//    ft::list<int> lst;
-//    std::cout << ( lst.begin() == lst.end() )<< std::endl;
-//    std::list<int> std_lst;
-//    std::cout << ( std_lst.begin() == std_lst.end() )<< std::endl;
-//  }
-  {
-//    ft::list<int> my_lst(vec.begin(), vec.end());
-//    ft::list<int> my_lst_new(my_lst);
-//    std::list<int> std_lst(vec.begin(), vec.end());
-//    std::list<int> std_lst_new(std_lst);
-//    for (const auto &item : std_lst_new) {
-//      std::cout << item << std::endl;
-//    }
-//    std::cout << "___________________________" << std::endl;
-//    for (const auto &item : my_lst_new) {
-//      std::cout << item << std::endl;
-//    }
-  }
-  {
-    ft::list<int> my_lst;
-    for (int i = 0; i < 3; ++i) {
-      my_lst.push_back(i);
-    }
-    my_lst = {-1, -2, 3, 5, 6, 7, 8};
-    my_lst.resize(10, -1);
-    for (const auto &item : my_lst) {
-      std::cout << item << std::endl;
-    }
-  }
+// compare only integral part:
+bool mycomparison (double first, double second)
+{ return ( int(first)<int(second) ); }
+
+int main ()
+{
+  std::list<double> first, second;
+
+  first.push_back (3.1);
+  first.push_back (2.2);
+  first.push_back (2.9);
+
+  second.push_back (3.7);
+  second.push_back (7.1);
+  second.push_back (1.4);
 
 
+  first.merge(second);
 
+  // (second is now empty)
+
+  second.push_back (2.1);
+
+  first.merge(second,mycomparison);
+
+  std::cout << "first contains:";
+  for (std::list<double>::iterator it=first.begin(); it!=first.end(); ++it)
+    std::cout << ' ' << *it;
+  std::cout << '\n';
+
+  return 0;
 }

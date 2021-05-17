@@ -43,7 +43,9 @@ class list {
   inline explicit list(size_type n, const allocator_type& a = allocator_type());
   inline list(size_type n, const value_type& value, const allocator_type& a = allocator_type());
   template <class Iter>
-  inline list(Iter first, Iter last, const allocator_type& a = allocator_type());
+  inline list(Iter first, Iter last, const allocator_type& a = allocator_type(),
+              typename std::enable_if
+                  <!std::numeric_limits<Iter>::is_specialized>::type * = 0);
   inline list(const list& list, const allocator_type& a = allocator_type());
   inline list(list&& x)
   noexcept(is_nothrow_move_constructible<allocator_type>::value);
@@ -57,7 +59,9 @@ class list {
       is_nothrow_move_assignable<allocator_type>::value);
   inline list& operator=(initializer_list<value_type>);
   template <class Iter>
-  inline void assign(Iter first, Iter last);
+  inline void assign(Iter first, Iter last,
+                     typename std::enable_if
+                         <!std::numeric_limits<Iter>::is_specialized>::type * = 0);
   inline void assign(size_type n, const value_type& t);
   inline void assign(initializer_list<value_type>);
 
@@ -116,29 +120,29 @@ class list {
   noexcept(allocator_traits<allocator_type>::is_always_equal::value);
   inline void clear() noexcept;
 
-//  void splice(const_iterator position, list& x);
-//  void splice(const_iterator position, list&& x);
-//  void splice(const_iterator position, list& x, const_iterator i);
-//  void splice(const_iterator position, list&& x, const_iterator i);
-//  void splice(const_iterator position, list& x, const_iterator first,
-//              const_iterator last);
-//  void splice(const_iterator position, list&& x, const_iterator first,
-//              const_iterator last);
-//
-//  void remove(const value_type& value);
-//  template <class Pred> void remove_if(Pred pred);
-//  void unique();
-//  template <class BinaryPredicate>
-//  void unique(BinaryPredicate binary_pred);
-//  void merge(list& x);
+  void splice(const_iterator position, list& x);
+  void splice(const_iterator position, list&& x);
+  void splice(const_iterator position, list& x, const_iterator i);
+  void splice(const_iterator position, list&& x, const_iterator i);
+  void splice(const_iterator position, list& x, const_iterator first,
+              const_iterator last);
+  void splice(const_iterator position, list&& x, const_iterator first,
+              const_iterator last);
+
+  void remove(const value_type& value);
+  template <class Pred> void remove_if(Pred pred);
+  void unique();
+  template <class BinaryPredicate>
+  void unique(BinaryPredicate binary_pred);
+  void merge(list& x);
 //  void merge(list&& x);
 //  template <class Compare>
 //  void merge(list& x, Compare comp);
 //  template <class Compare>
 //  void merge(list&& x, Compare comp);
 //  void sort();
-//  template <class Compare>
-//  void sort(Compare comp);
+  template <class Compare>
+  void sort(Compare comp);
 //  void reverse() noexcept;
 
  private:
@@ -157,6 +161,7 @@ class list {
   void default_append(size_type n);
   void value_append(size_type n, const value_type& x);
   void erase_at_end(const_iterator position);
+  unsigned long get_size(const_iterator first, const_iterator last);
 };
 
 template<class T, class Alloc>
@@ -221,7 +226,7 @@ void list<T, Alloc>::push_back(const value_type &x) {
 
 template<class T, class Alloc>
 void list<T, Alloc>::push_back(value_type &&x) {
-  list_node<T> *p = create_node_with_rvalue(std::forward<T>(x));
+  list_node<T> *p = create_node_with_args(std::forward<T>(x));
   link_node_back(p);
 }
 
@@ -285,7 +290,9 @@ typename list<T, Alloc>::const_iterator list<T, Alloc>::end() const noexcept {
 
 template<class T, class Alloc>
 template<class Iter>
-list<T, Alloc>::list(Iter first, Iter last, const allocator_type& a) : alloc_(a) {
+list<T, Alloc>::list(Iter first, Iter last, const allocator_type& a,
+                     typename std::enable_if
+    <!std::numeric_limits<Iter>::is_specialized>::type *) : alloc_(a) {
   for (; first != last; ++first) {
     push_back(*first);
   }
@@ -395,7 +402,9 @@ list<T, Alloc> &list<T, Alloc>::operator=(initializer_list<value_type> l) {
 
 template<class T, class Alloc>
 template<class Iter>
-void list<T, Alloc>::assign(Iter first, Iter last) {
+void list<T, Alloc>::assign(Iter first, Iter last,
+                    typename std::enable_if
+                        <!std::numeric_limits<Iter>::is_specialized>::type *) {
   list<T, Alloc> l(std::move(*this));
   for (; first != last; ++first) {
     push_back(*first);
@@ -682,6 +691,135 @@ void list<T, Alloc>::swap(list &l)
 noexcept(allocator_traits<allocator_type>::is_always_equal::value) {
   (void)l;
   //swap head node
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::splice(list::const_iterator position, list &x) {
+  auto pos = position.base();
+  x.head_.prev_->next_ = pos;
+  x.head_.next_->prev_ = pos->prev_;
+  pos->prev_->next_ = x.head_.next_;
+  pos->prev_ = x.head_.prev_;
+  head_.size_ += x.head_.size_;
+  x.head_.prev_ = x.head_.next_ = &x.head_;
+  x.head_.size_ = 0;
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::splice(list::const_iterator position, list &&x) {
+  splice(position, x);
+}
+
+template<class T, class Alloc>
+typename list<T, Alloc>::size_type list<T, Alloc>::get_size(
+                              list::const_iterator first,
+                              list::const_iterator last) {
+  return (std::distance(first, last));
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::splice(list::const_iterator position,
+                            list &x,
+                            list::const_iterator first,
+                            list::const_iterator last) {
+  size_type size = get_size(first, last);
+  x.head_.size_ -= size;
+  head_.size_ += size;
+  auto n_pos = position.base();
+  auto n_first = first.base();
+  auto n_last = last.base();
+  n_first->prev_->next_ = n_last;
+  n_last = static_cast<list_node<value_type> *>(n_last->prev_);
+  n_last->next_->prev_ = n_first->prev_;
+  n_pos->prev_->next_ = n_first;
+  n_first->prev_ = n_pos->prev_;
+  n_pos->prev_ = n_last;
+  n_last->next_ = n_pos;
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::splice(list::const_iterator position,
+                            list &x,
+                            list::const_iterator i) {
+  splice(position, x, i, ++i);
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::splice(list::const_iterator position,
+                            list &&x,
+                            list::const_iterator i) {
+  splice(position, x, i);
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::splice(list::const_iterator position,
+                            list &&x,
+                            list::const_iterator first,
+                            list::const_iterator last) {
+  splice(position, x, first, last);
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::remove(const value_type &value) {
+  for (auto it=begin(); it!=end();) {
+    if (*it == value) {
+      auto p = it.base();
+      ++it;
+      delete_node(static_cast<list_node<T> *>(p));
+    } else {
+      ++it;
+    }
+  }
+}
+
+template<class T, class Alloc>
+template<class Pred>
+void list<T, Alloc>::remove_if(Pred pred) {
+  for (auto it=begin(); it!=end();) {
+    if (pred(*it)) {
+      auto p = it.base();
+      ++it;
+      delete_node(static_cast<list_node<T> *>(p));
+    } else {
+      ++it;
+    }
+  }
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::unique() {
+  unique(equal_to<value_type>());
+}
+
+template<class T, class Alloc>
+template<class BinaryPredicate>
+void list<T, Alloc>::unique(BinaryPredicate binary_pred) {
+  for (auto it=begin(); it!=end();) {
+    auto iter = it++;
+    if (binary_pred(*iter, *it)) {
+      auto p = it.base();
+      ++it;
+      delete_node(static_cast<list_node<T> *>(p));
+    } else {
+      ++it;
+    }
+  }
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::merge(list &x) {
+  (void)x;
+}
+
+template<class T, class Alloc>
+template<class Compare>
+
+
+
+template<class T, class Alloc>
+template<class Compare>
+void list<T, Alloc>::sort(Compare comp) {
+
 }
 
 }
