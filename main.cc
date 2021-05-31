@@ -103,33 +103,10 @@ bool mycomparison (double first, double second)
 
 
 int main () {
-  ft::list<double> first;
-  std::list<double> second;
+  ft::list<int> my_lst_tmp(40);
+  std::list<int> stl_lst_tmp(40);
+//    init_lst(my_lst_tmp, stl_lst_tmp);
+  ft::list<int> my_lst(std::move(my_lst_tmp));
+  std::list<int> stl_lst(std::move(stl_lst_tmp));
 
-  first.push_back (3.7);
-  first.push_back (-7.1);
-  first.push_back (1.4);
-  first.push_back (1.4);
-
-  second.push_back (3.7);
-  second.push_back (-7.1);
-  second.push_back (1.4);
-  second.push_back (1.4);
-  {
-    LOG_DURATION("test_my")
-    first.sort();
-  }
-  {
-    LOG_DURATION("test_std")
-    second.sort();
-  }
-  second.reverse();
-  first.reverse();
-  for (double & it : first)
-    std::cout << ' ' << it;
-  std::cout << '\n';
-  for (double & it : second)
-    std::cout << ' ' << it;
-  std::cout << '\n';
-  return 0;
 }

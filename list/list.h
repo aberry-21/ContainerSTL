@@ -38,7 +38,7 @@ class list {
 /*
 **                           Public Member Functions
 */
-  inline list() noexcept(is_nothrow_default_constructible<allocator_type>::value);
+  inline list() noexcept(std::is_nothrow_default_constructible<allocator_type>::value);
   inline explicit list(const allocator_type &a);
   inline explicit list(size_type n, const allocator_type &a = allocator_type());
   inline list(size_type n,
@@ -50,23 +50,23 @@ class list {
                   <!std::numeric_limits<Iter>::is_specialized>::type * = 0);
   inline list(const list &list, const allocator_type &a = allocator_type());
   inline list(list &&x)
-  noexcept(is_nothrow_move_constructible<allocator_type>::value);
+  noexcept(std::is_nothrow_move_constructible<allocator_type>::value);
   inline list(list &&x, const allocator_type &a);
-  inline list(initializer_list<value_type> l,
+  inline list(std::initializer_list<value_type> l,
               const allocator_type &a = allocator_type());
   inline virtual ~list();
   inline list &operator=(const list &x);
   inline list &operator=(list &&x)
   noexcept(
   allocator_type::propagate_on_container_move_assignment::value &&
-      is_nothrow_move_assignable<allocator_type>::value);
-  inline list &operator=(initializer_list<value_type>);
+      std::is_nothrow_move_assignable<allocator_type>::value);
+  inline list &operator=(std::initializer_list<value_type>);
   template<class Iter>
   inline void assign(Iter first, Iter last,
                      typename std::enable_if
                          <!std::numeric_limits<Iter>::is_specialized>::type * = 0);
   inline void assign(size_type n, const value_type &t);
-  inline void assign(initializer_list<value_type>);
+  inline void assign(std::initializer_list<value_type>);
 
   inline allocator_type get_allocator() const noexcept;
 
@@ -111,7 +111,7 @@ class list {
   iterator insert(const_iterator position, Iter first, Iter last,
                   typename std::enable_if
                       <!std::numeric_limits<Iter>::is_specialized>::type * = 0);
-  iterator insert(const_iterator position, initializer_list<value_type> il);
+  iterator insert(const_iterator position, std::initializer_list<value_type> il);
 
   iterator erase(const_iterator position);
   iterator erase(const_iterator first, const_iterator last);
@@ -120,7 +120,7 @@ class list {
   void resize(size_type sz, const value_type &c);
 
   void swap(list &)
-  noexcept(allocator_traits<allocator_type>::is_always_equal::value);
+  noexcept(std::allocator_traits<allocator_type>::is_always_equal::value);
   inline void clear() noexcept;
 
   void splice(const_iterator position, list &x);
@@ -176,7 +176,7 @@ class list {
 
 template<class T, class Alloc>
 list<T, Alloc>::list()
-noexcept(is_nothrow_default_constructible<allocator_type>::value)
+noexcept(std::is_nothrow_default_constructible<allocator_type>::value)
     : head_(), alloc_() {}
 
 template<class T, class Alloc>
@@ -317,26 +317,18 @@ list<T, Alloc>::list(const list &list, const allocator_type &a) : alloc_(a) {
 }
 
 template<class T, class Alloc>
-list<T, Alloc>::list(list &&x) noexcept(is_nothrow_move_constructible<
+list<T, Alloc>::list(list &&x) noexcept(std::is_nothrow_move_constructible<
     allocator_type>::value) {
-  head_.next_ = x.head_.next_;
-  head_.prev_ = x.head_.prev_;
-  head_.size_ = x.head_.size_;
-  x.head_.size_ = 0;
-  x.head_.prev_ = x.head_.next_ = &x.head_;
+  splice(end(), x);
 }
 
 template<class T, class Alloc>
 list<T, Alloc>::list(list &&x, const allocator_type &a) : alloc_(a) {
-  head_.next_ = x.head_.next_;
-  head_.prev_ = x.head_.prev_;
-  head_.size_ = x.head_.size_;
-  x.head_.size_ = 0;
-  x.head_.prev_ = x.head_.next_ = &x.head_;
+  splice(end(), x);
 }
 
 template<class T, class Alloc>
-list<T, Alloc>::list(initializer_list<value_type> l, const allocator_type &a)
+list<T, Alloc>::list(std::initializer_list<value_type> l, const allocator_type &a)
     : alloc_(a) {
   auto first = l.begin();
   auto last = l.end();
@@ -388,7 +380,7 @@ void list<T, Alloc>::clear() noexcept {
 template<class T, class Alloc>
 list<T, Alloc> &list<T, Alloc>::operator=(list &&x) noexcept(
 allocator_type::propagate_on_container_move_assignment::value &&
-    is_nothrow_move_assignable<allocator_type>::value) {
+    std::is_nothrow_move_assignable<allocator_type>::value) {
   clear();
   head_.size_ = x.head_.size_;
   head_.next_ = x.head_.next_;
@@ -399,7 +391,7 @@ allocator_type::propagate_on_container_move_assignment::value &&
 }
 
 template<class T, class Alloc>
-list<T, Alloc> &list<T, Alloc>::operator=(initializer_list<value_type> l) {
+list<T, Alloc> &list<T, Alloc>::operator=(std::initializer_list<value_type> l) {
   clear();
   auto first = l.begin();
   auto last = l.end();
@@ -429,7 +421,7 @@ void list<T, Alloc>::assign(list::size_type n, const value_type &t) {
 }
 
 template<class T, class Alloc>
-void list<T, Alloc>::assign(initializer_list<value_type> l) {
+void list<T, Alloc>::assign(std::initializer_list<value_type> l) {
   *this = l;
 }
 
@@ -620,7 +612,7 @@ typename list<T, Alloc>::iterator list<T, Alloc>::insert(
 template<class T, class Alloc>
 typename list<T, Alloc>::iterator list<T, Alloc>::insert(
     list::const_iterator position,
-    initializer_list<value_type> il) {
+    std::initializer_list<value_type> il) {
   return insert(position, il.begin(), il.end());
 }
 
@@ -700,7 +692,7 @@ void list<T, Alloc>::resize(list::size_type sz, const value_type &c) {
 
 template<class T, class Alloc>
 void list<T, Alloc>::swap(list &l)
-noexcept(allocator_traits<allocator_type>::is_always_equal::value) {
+noexcept(std::allocator_traits<allocator_type>::is_always_equal::value) {
   (void) l;
   //swap head node
 }
@@ -806,7 +798,7 @@ void list<T, Alloc>::remove_if(Pred pred) {
 
 template<class T, class Alloc>
 void list<T, Alloc>::unique() {
-  unique(equal_to<value_type>());
+  unique(std::equal_to<value_type>());
 }
 
 template<class T, class Alloc>
@@ -898,10 +890,8 @@ template<class Compare>
 inline list_node<T> *list<T, Alloc>::merge(list_node<T> *first, list_node<T> *second, Compare comp) {
   if (!first)
     return second;
-
   if (!second)
     return first;
-
   if (comp(first->data_, second->data_))
   {
     first->next_ = merge(static_cast<list_node<T> *>(first->next_), second, comp);
