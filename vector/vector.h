@@ -880,7 +880,9 @@ typename vector<T, Alloc>::iterator vector<T, Alloc>::insert(
                                           vector::const_iterator position,
                                           vector::size_type n,
                                           const value_type &x) {
-  if (attributes_.size_ + n > max_size()) throw ft::length_error("vector");
+  if (attributes_.size_ + n > max_size()) {
+    throw ft::length_error("vector");
+  }
   pointer p = attributes_.data_ + (position - begin());
   if (!n) {
     return (iterator(p));
