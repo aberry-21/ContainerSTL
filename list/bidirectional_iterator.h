@@ -7,8 +7,7 @@
 #include "list_base.h"
 
 namespace ft {
-template<class T>
-    //TODO refactor!
+template<typename T, class Node>
 class bidirectional_iterator {
  public:
   typedef T iterator_type;
@@ -18,103 +17,96 @@ class bidirectional_iterator {
   typedef typename qualifier_type<T>::pointer pointer;
   typedef typename qualifier_type<T>::reference reference;
 
-  bidirectional_iterator() = default;
-  ~bidirectional_iterator() = default;
-  explicit bidirectional_iterator(list_node<value_type> *node);
-  inline bidirectional_iterator(bidirectional_iterator<value_type> const &other);
-  inline bidirectional_iterator(bidirectional_iterator<const value_type> const &other);
-  bidirectional_iterator& operator=(const bidirectional_iterator& x);
-  reference operator*();
-  pointer operator->();
-  bidirectional_iterator operator++();
-  bidirectional_iterator operator--();
-  bidirectional_iterator operator++(int);
-  bidirectional_iterator operator--(int);
-  bool operator==(const bidirectional_iterator& x);
-  bool operator!=(const bidirectional_iterator& x);
-  list_node<value_type> *base() const;
+  inline bidirectional_iterator() = default;
+  inline ~bidirectional_iterator() = default;
+  inline explicit bidirectional_iterator(Node *node);
+  inline bidirectional_iterator(bidirectional_iterator<value_type,
+                                                       Node> const &other);
+  inline bidirectional_iterator(bidirectional_iterator<const value_type,
+                                                       Node> const &other);
+  inline reference operator*();
+  inline pointer operator->();
+  inline bidirectional_iterator operator++();
+  inline bidirectional_iterator operator--();
+  inline bidirectional_iterator operator++(int);
+  inline bidirectional_iterator operator--(int);
+  inline bool operator==(const bidirectional_iterator &x);
+  inline bool operator!=(const bidirectional_iterator &x);
+  inline Node *base() const;
  private:
-  list_node<value_type> *node_;
+  Node *node_;
 };
 
-template<class T>
-bidirectional_iterator<T>::bidirectional_iterator(list_node<value_type> *node)
-                          : node_(node) {}
+template<typename T, class Node>
+bidirectional_iterator<T, Node>::bidirectional_iterator(Node *node)
+    : node_(node) {}
 
-template<class T>
-bidirectional_iterator<T> &bidirectional_iterator<T>::
-    operator=(const bidirectional_iterator &x) {
-  if (this == &x) {
-    return *this;
-  }
-  node_ = x.node_;
+template<typename T, class Node>
+bidirectional_iterator<T, Node>::
+bidirectional_iterator(const bidirectional_iterator<value_type, Node> &other)
+    : node_(other.base()) {}
+
+template<typename T, class Node>
+bidirectional_iterator<T, Node>::
+bidirectional_iterator(const bidirectional_iterator<const value_type,
+                                                    Node> &other)
+    : node_(other.base()) {}
+
+template<typename T, class Node>
+typename bidirectional_iterator<T, Node>::
+reference bidirectional_iterator<T, Node>::operator*() {
+  return node_->value_;
+}
+
+template<typename T, class Node>
+typename bidirectional_iterator<T, Node>::
+pointer bidirectional_iterator<T, Node>::operator->() {
+  return std::addressof(node_->value_);
+}
+
+template<typename T, class Node>
+bidirectional_iterator<T, Node> bidirectional_iterator<T, Node>::operator++() {
+  node_ = node_->next_;
   return *this;
 }
 
-template<class T>
-typename bidirectional_iterator<T>::reference bidirectional_iterator<T>
-    ::operator*() {
-  return node_->data_;
-}
-
-template<class T>
-typename bidirectional_iterator<T>::pointer bidirectional_iterator<T>
-    ::operator->() {
-  return std::addressof(node_->data_);
-}
-
-template<class T>
-bidirectional_iterator<T> bidirectional_iterator<T>
-    ::operator++() {
-  node_ = static_cast<list_node<value_type> *>(node_->next_);
+template<typename T, class Node>
+bidirectional_iterator<T, Node> bidirectional_iterator<T, Node>::operator--() {
+  node_ = node_->prev_;
   return *this;
 }
 
-template<class T>
-bidirectional_iterator<T> bidirectional_iterator<T>
-    ::operator--() {
-  node_ = static_cast<list_node<value_type> *>(node_->prev_);
-  return *this;
-}
-
-template<class T>
-bidirectional_iterator<T> bidirectional_iterator<T>::operator++(int) {
-  bidirectional_iterator<T> tmp = *this;
-  node_ = static_cast<list_node<value_type> *>(node_->next_);
+template<typename T, class Node>
+bidirectional_iterator<T, Node> bidirectional_iterator<T,
+                                                       Node>::operator++(int) {
+  auto tmp = *this;
+  node_ = node_->next_;
   return tmp;
 }
 
-template<class T>
-bidirectional_iterator<T> bidirectional_iterator<T>::operator--(int) {
-  bidirectional_iterator<T> tmp = *this;
-  node_ = static_cast<list_node<value_type> *>(node_->prev_);
+template<typename T, class Node>
+bidirectional_iterator<T, Node> bidirectional_iterator<T,
+                                                       Node>::operator--(int) {
+  auto tmp = *this;
+  node_ = node_->prev_;
   return tmp;
 }
 
-template<class T>
-bool bidirectional_iterator<T>::operator==(const bidirectional_iterator &x) {
-  return node_ == x.node_;
-}
-
-template<class T>
-bool bidirectional_iterator<T>::operator!=(const bidirectional_iterator &x) {
-  return node_ != x.node_;
-}
-
-template<class T>
-list_node<typename bidirectional_iterator<T>::value_type>
-    *bidirectional_iterator<T>::base() const {
+template<typename T, class Node>
+Node *bidirectional_iterator<T, Node>::base() const {
   return node_;
 }
 
-//TODO
-template<class T>
-bidirectional_iterator<T>::bidirectional_iterator(const bidirectional_iterator<
-    value_type> &other)  : node_(other.base()) {}
+template<typename T, class Node>
+bool bidirectional_iterator<T, Node>
+::operator==(const bidirectional_iterator &x) {
+  return node_ == x.node_;
+}
 
-template<class T>
-bidirectional_iterator<T>::bidirectional_iterator(
-    bidirectional_iterator<const value_type> const &other)
-    : node_(other.base()) {}
+template<typename T, class Node>
+bool bidirectional_iterator<T, Node>
+::operator!=(const bidirectional_iterator &x) {
+  return node_ != x.node_;
+}
 
 }

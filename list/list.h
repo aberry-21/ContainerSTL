@@ -1,5 +1,5 @@
-// -*- C++ -*-
 //===------------------------------- list ---------------------------------===//
+// -*- C++ -*-
 //
 //                     Created by Aaron Berry on 5/14/21.
 //
@@ -19,6 +19,8 @@ namespace ft {
 
 template<class T, class Alloc = ft::Allocator<T> >
 class list {
+ private:
+  struct Node_;
 /*
 **                                Public Types
 */
@@ -29,12 +31,13 @@ class list {
   typedef const value_type &const_reference;
   typedef typename allocator_type::pointer pointer;
   typedef typename allocator_type::const_pointer const_pointer;
-  typedef ft::bidirectional_iterator<T> iterator;
-  typedef ft::bidirectional_iterator<const T> const_iterator;
+  typedef ft::bidirectional_iterator<T, Node_> iterator;
+  typedef ft::bidirectional_iterator<const T, Node_> const_iterator;
   typedef ft::reverse_iterator<iterator> reverse_iterator;
   typedef ft::reverse_iterator<const_iterator> const_reverse_iterator;
   typedef ptrdiff_t difference_type;
   typedef size_t size_type;
+  typedef typename Alloc::template rebind<Node_>::other node_alloc_;
 /*
 **                           Public Member Functions
 */
@@ -57,9 +60,7 @@ class list {
   inline virtual ~list();
   inline list &operator=(const list &x);
   inline list &operator=(list &&x)
-  noexcept(
-  allocator_type::propagate_on_container_move_assignment::value &&
-      std::is_nothrow_move_assignable<allocator_type>::value);
+  noexcept(std::is_nothrow_move_assignable<allocator_type>::value);
   inline list &operator=(std::initializer_list<value_type>);
   template<class Iter>
   inline void assign(Iter first, Iter last,
@@ -67,9 +68,7 @@ class list {
                          <!std::numeric_limits<Iter>::is_specialized>::type * = 0);
   inline void assign(size_type n, const value_type &t);
   inline void assign(std::initializer_list<value_type>);
-
   inline allocator_type get_allocator() const noexcept;
-
   inline iterator begin() noexcept;
   inline const_iterator begin() const noexcept;
   inline iterator end() noexcept;
@@ -82,59 +81,54 @@ class list {
   inline const_iterator cend() const noexcept;
   inline const_reverse_iterator crbegin() const noexcept;
   inline const_reverse_iterator crend() const noexcept;
-
   inline reference front();
   inline const_reference front() const;
   inline reference back();
   inline const_reference back() const;
-
   inline bool empty() const noexcept;
   inline size_type size() const noexcept;
   inline size_type max_size() const noexcept;
-
   template<class... Args>
   inline void emplace_front(Args &&... args);
-  void pop_front();
+  inline void pop_front();
   template<class... Args>
   void emplace_back(Args &&... args);
-  void pop_back();
-  void push_front(const value_type &x);
-  void push_front(value_type &&x);
+  inline void pop_back();
+  inline void push_front(const value_type &x);
+  inline void push_front(value_type &&x);
   inline void push_back(const value_type &x);
   inline void push_back(value_type &&x);
   template<class... Args>
-  iterator emplace(const_iterator position, Args &&... args);
-  iterator insert(const_iterator position, const value_type &x);
-  iterator insert(const_iterator position, value_type &&x);
-  iterator insert(const_iterator position, size_type n, const value_type &x);
+  inline iterator emplace(const_iterator position, Args &&... args);
+  inline iterator insert(const_iterator position, const value_type &x);
+  inline iterator insert(const_iterator position, value_type &&x);
+  inline iterator insert(const_iterator position,
+                         size_type n,
+                         const value_type &x);
   template<class Iter>
-  iterator insert(const_iterator position, Iter first, Iter last,
-                  typename std::enable_if
-                      <!std::numeric_limits<Iter>::is_specialized>::type * = 0);
-  iterator insert(const_iterator position, std::initializer_list<value_type> il);
-
-  iterator erase(const_iterator position);
-  iterator erase(const_iterator first, const_iterator last);
-
-  void resize(size_type sz);
-  void resize(size_type sz, const value_type &c);
-
-  void swap(list &)
+  inline iterator insert(const_iterator position, Iter first, Iter last,
+                         typename std::enable_if
+                             <!std::numeric_limits<Iter>::is_specialized>::type * = 0);
+  inline iterator insert(const_iterator position,
+                         std::initializer_list<value_type> il);
+  inline iterator erase(const_iterator position);
+  inline iterator erase(const_iterator first, const_iterator last);
+  inline void resize(size_type sz);
+  inline void resize(size_type sz, const value_type &c);
+  inline void swap(list &)
   noexcept(std::allocator_traits<allocator_type>::is_always_equal::value);
   inline void clear() noexcept;
-
-  void splice(const_iterator position, list &x);
-  void splice(const_iterator position, list &&x);
-  void splice(const_iterator position, list &x, const_iterator i);
-  void splice(const_iterator position, list &&x, const_iterator i);
-  void splice(const_iterator position, list &x, const_iterator first,
-              const_iterator last);
-  void splice(const_iterator position, list &&x, const_iterator first,
-              const_iterator last);
-
-  void remove(const value_type &value);
+  inline void splice(const_iterator position, list &x);
+  inline void splice(const_iterator position, list &&x);
+  inline void splice(const_iterator position, list &x, const_iterator i);
+  inline void splice(const_iterator position, list &&x, const_iterator i);
+  inline void splice(const_iterator position, list &x, const_iterator first,
+                     const_iterator last);
+  inline void splice(const_iterator position, list &&x, const_iterator first,
+                     const_iterator last);
+  inline void remove(const value_type &value);
   template<class Pred>
-  void remove_if(Pred pred);
+  inline void remove_if(Pred pred);
   void unique();
   template<class BinaryPredicate>
   void unique(BinaryPredicate binary_pred);
@@ -142,74 +136,57 @@ class list {
   void merge(list &&x);
   template<class Compare>
   void merge(list &x, Compare comp);
-  template <class Compare>
-  void merge(list&& x, Compare comp);
+  template<class Compare>
+  void merge(list &&x, Compare comp);
   void sort();
-  template <class Compare>
+  template<class Compare>
   void sort(Compare comp);
   void reverse() noexcept;
-
  private:
-  list_base<T, Alloc> head_;
-  ft::Allocator<T> alloc_;
-
-  void link_node_back(list_node<T> *p);
-  void link_node_front(list_node<T> *p);
-  list_node<T> *create_node_without_value();
-  list_node<T> *create_node_with_lvalue(const value_type &x);
+  struct Node_ {
+    Node_ *next_;
+    Node_ *prev_;
+    value_type value_;
+  };
+  Node_ *head_;
+  Alloc alloc_;
+  node_alloc_ n_alloc_;
+  size_type size_;
+ protected:
+  Node_ *get_node_();
+  void put_node_(Node_ *p);
+  void init_head_();
+  void link_node_(const_iterator position, Node_ *p);
+  Node_ *create_node_without_value_();
+  Node_ *create_node_with_lvalue_(const value_type &x);
   template<typename... Args>
-  list_node<T> *create_node_with_args(Args &&... args);
-  void unlink_node(list_node<T> *p);
-  void delete_node(list_node<T> *p);
-  void link_node(const_iterator position, list_node<T> *p);
-  void default_append(size_type n);
-  void value_append(size_type n, const value_type &x);
-  void erase_at_end(const_iterator position);
-  unsigned long get_size(const_iterator first, const_iterator last);
-
-  list_node<T> *split(list_node<T> *head);
-  template<class Compare>
-  list_node<T> *merge(list_node<T> *first, list_node<T> *second, Compare comp);
-  template<class Compare>
-  list_node<T> *mergeSort(list_node<T> *head, Compare comp);
+  Node_ *create_node_with_args_(Args &&... args);
+  void default_append_(const_iterator position, size_type n);
+  void value_append_(const_iterator position, size_type n, const value_type &x);
+  template<class Iter>
+  size_type range_append_(const_iterator position, Iter first, Iter last);
 };
 
 template<class T, class Alloc>
-list<T, Alloc>::list()
-noexcept(std::is_nothrow_default_constructible<allocator_type>::value)
-    : head_(), alloc_() {}
-
-template<class T, class Alloc>
-list<T, Alloc>::list(const allocator_type &a)
-    : alloc_(a), head_() {}
-
-template<class T, class Alloc>
-list<T, Alloc>::list(list::size_type n, const allocator_type &a) : alloc_(a) {
-  for (size_type i = 0; i < n; ++i) {
-    list_node<T> *p = create_node_without_value();
-    link_node_back(p);
-  }
-}
-
-template<class T, class Alloc>
-list_node<T> *list<T, Alloc>::create_node_without_value() {
-  list_node<T> *p = head_.get_node();
+typename list<T, Alloc>::Node_ *list<T, Alloc>::create_node_without_value_() {
+  Node_ *p = get_node_();
   try {
-    alloc_.construct(&p->data_);
+    alloc_.construct(&p->value_);
   } catch (...) {
-    head_.put_node(p);
+    put_node_(p);
     throw;
   }
   return p;
 }
 
 template<class T, class Alloc>
-list_node<T> *list<T, Alloc>::create_node_with_lvalue(const value_type &x) {
-  list_node<T> *p = head_.get_node();
+typename list<T, Alloc>::Node_ *list<T, Alloc>::
+create_node_with_lvalue_(const value_type &x) {
+  Node_ *p = get_node_();
   try {
-    alloc_.construct(&p->data_, x);
+    alloc_.construct(&p->value_, x);
   } catch (...) {
-    head_.put_node(p);
+    put_node_(p);
     throw;
   }
   return p;
@@ -217,218 +194,108 @@ list_node<T> *list<T, Alloc>::create_node_with_lvalue(const value_type &x) {
 
 template<class T, class Alloc>
 template<typename... Args>
-list_node<T> *list<T, Alloc>::create_node_with_args(Args &&... args) {
-  list_node<T> *p = head_.get_node();
+typename list<T, Alloc>::Node_ *list<T, Alloc>::
+create_node_with_args_(Args &&... args) {
+  Node_ *p = get_node_();
   try {
-    alloc_.construct(&p->data_, std::forward<T>(args) ...);
+    alloc_.construct(&p->value_, std::forward<T>(args) ...);
   } catch (...) {
-    head_.put_node(p);
+    put_node_(p);
     throw;
   }
   return p;
 }
 
 template<class T, class Alloc>
-void list<T, Alloc>::push_back(const value_type &x) {
-  list_node<T> *p = create_node_with_lvalue(x);
-  link_node_back(p);
-}
-
-template<class T, class Alloc>
-void list<T, Alloc>::push_back(value_type &&x) {
-  list_node<T> *p = create_node_with_args(std::forward<T>(x));
-  link_node_back(p);
-}
-
-template<class T, class Alloc>
-list<T, Alloc>::list(list::size_type n,
-                     const value_type &value,
-                     const allocator_type &a) : alloc_(a) {
-  for (size_type i = 0; i < n; ++i) {
-    push_back(value);
-  }
-}
-
-template<class T, class Alloc>
-void list<T, Alloc>::unlink_node(list_node<T> *p) {
-  p->prev_->next_ = p->next_;
-  p->next_->prev_ = p->prev_;
-  --head_.size_;
-}
-
-template<class T, class Alloc>
-void list<T, Alloc>::link_node_back(list_node<T> *p) {
-  link_node(cend(), p);
-}
-
-template<class T, class Alloc>
-void list<T, Alloc>::link_node_front(list_node<T> *p) {
-  link_node(cbegin(), p);
-}
-
-template<class T, class Alloc>
-void list<T, Alloc>::link_node(list::const_iterator position, list_node<T> *p) {
+void list<T, Alloc>::link_node_(list::const_iterator position, list::Node_ *p) {
   auto pos = position.base();
   p->next_ = pos;
   p->prev_ = pos->prev_;
   pos->prev_->next_ = p;
   pos->prev_ = p;
-  ++head_.size_;
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::init_head_() {
+  head_ = get_node_();
+  head_->prev_ = head_;
+  head_->next_ = head_;
+}
+
+template<class T, class Alloc>
+typename list<T, Alloc>::Node_ *list<T, Alloc>::get_node_() {
+  return n_alloc_.allocate(1);
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::put_node_(list::Node_ *p) {
+  return n_alloc_.deallocate(p, 1);
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::default_append_(const_iterator position,
+                                     list::size_type n) {
+  for (size_type i = 0; i < n; ++i) {
+    try {
+      link_node_(position, create_node_without_value_());
+    } catch (...) {
+      erase(std::next(position, -static_cast<difference_type>(i)), position);
+      throw std::runtime_error("Error value append");
+    }
+  }
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::value_append_(const_iterator position,
+                                   list::size_type n,
+                                   const value_type &x) {
+  for (size_type i = 0; i < n; ++i) {
+    try {
+      link_node_(position, create_node_with_lvalue_(x));
+    } catch (...) {
+      erase(std::next(position, -static_cast<difference_type>(i)), position);
+      throw std::runtime_error("Error value append");
+    }
+  }
+}
+
+template<class T, class Alloc>
+template<class Iter>
+typename list<T, Alloc>::size_type list<T, Alloc>::range_append_(
+    list::const_iterator position,
+    Iter first,
+    Iter last) {
+  size_type size = 0;
+  for (; first != last; ++first) {
+    try {
+      link_node_(position, create_node_with_lvalue(*first));
+      ++size;
+    } catch (...) {
+      erase(std::next(position, -static_cast<difference_type>(size)), position);
+      throw std::runtime_error("Error range append");
+    }
+  }
+  return size;
 }
 
 template<class T, class Alloc>
 typename list<T, Alloc>::iterator list<T, Alloc>::begin() noexcept {
-  return iterator(static_cast<list_node<T> *>(head_.next_));
+  return iterator(head_->next_);
 }
 
 template<class T, class Alloc>
 typename list<T, Alloc>::const_iterator list<T, Alloc>::begin() const noexcept {
-  return const_iterator(static_cast<list_node<T> *>(head_.next_));
+  return const_iterator(head_->next_);
 }
 
 template<class T, class Alloc>
 typename list<T, Alloc>::iterator list<T, Alloc>::end() noexcept {
-  return iterator(static_cast<list_node<T> *>(head_.prev_->next_));
+  return iterator(head_);
 }
 
 template<class T, class Alloc>
 typename list<T, Alloc>::const_iterator list<T, Alloc>::end() const noexcept {
-  return const_iterator(static_cast<list_node<T> *>(head_.prev_->next_));
-}
-
-template<class T, class Alloc>
-template<class Iter>
-list<T, Alloc>::list(Iter first, Iter last, const allocator_type &a,
-                     typename std::enable_if
-                         <!std::numeric_limits<Iter>::is_specialized>::type *)
-    : alloc_(a) {
-  for (; first != last; ++first) {
-    push_back(*first);
-  }
-}
-
-template<class T, class Alloc>
-list<T, Alloc>::list(const list &list, const allocator_type &a) : alloc_(a) {
-  auto first = list.begin();
-  auto last = list.end();
-  for (; first != last; ++first) {
-    push_back(*first);
-  }
-}
-
-template<class T, class Alloc>
-list<T, Alloc>::list(list &&x) noexcept(std::is_nothrow_move_constructible<
-    allocator_type>::value) {
-  splice(end(), x);
-}
-
-template<class T, class Alloc>
-list<T, Alloc>::list(list &&x, const allocator_type &a) : alloc_(a) {
-  splice(end(), x);
-}
-
-template<class T, class Alloc>
-list<T, Alloc>::list(std::initializer_list<value_type> l, const allocator_type &a)
-    : alloc_(a) {
-  auto first = l.begin();
-  auto last = l.end();
-  for (; first != last; ++first) {
-    push_back(*first);
-  }
-}
-
-//TODO
-template<class T, class Alloc>
-list<T, Alloc>::~list() {
-  clear();
-}
-
-template<class T, class Alloc>
-list<T, Alloc> &list<T, Alloc>::operator=(const list &x) {
-  if (this == &x) {
-    return *this;
-  }
-  clear();
-  auto first = x.begin();
-  auto last = x.end();
-  for (; first != last; ++first) {
-    push_back(*first);
-  }
-  return *this;
-}
-
-template<class T, class Alloc>
-void list<T, Alloc>::clear() noexcept {
-//  auto first = begin();
-//  auto last = end();
-//  for (; first != last; ++first) {
-//    alloc_.destroy(&*first);
-//  }
-//  first = ++begin();
-//  ++last;
-//  for (; first != last; ++first) {
-//    auto iter = first;
-//    --iter;
-//    head_.put_node(iter.base());
-//  }
-//  head_.next_ = head_.prev_ = &head_;
-  erase_at_end(begin());
-  head_.size_ = 0;
-}
-
-//TODO maybe add swap in head class
-template<class T, class Alloc>
-list<T, Alloc> &list<T, Alloc>::operator=(list &&x) noexcept(
-allocator_type::propagate_on_container_move_assignment::value &&
-    std::is_nothrow_move_assignable<allocator_type>::value) {
-  clear();
-  head_.size_ = x.head_.size_;
-  head_.next_ = x.head_.next_;
-  head_.prev_ = x.head_.prev_;
-  x.head_.prev_ = x.head_.next_ = &x.head_;
-  x.head_.size_ = 0;
-  return *this;
-}
-
-template<class T, class Alloc>
-list<T, Alloc> &list<T, Alloc>::operator=(std::initializer_list<value_type> l) {
-  clear();
-  auto first = l.begin();
-  auto last = l.end();
-  for (; first != last; ++first) {
-    push_back(*first);
-  }
-  return *this;
-}
-
-template<class T, class Alloc>
-template<class Iter>
-void list<T, Alloc>::assign(Iter first, Iter last,
-                            typename std::enable_if
-                                <!std::numeric_limits<Iter>::is_specialized>::type *) {
-  list<T, Alloc> l(std::move(*this));
-  for (; first != last; ++first) {
-    push_back(*first);
-  }
-}
-
-template<class T, class Alloc>
-void list<T, Alloc>::assign(list::size_type n, const value_type &t) {
-  list<T, Alloc> l(std::move(*this));
-  for (size_type i = 0; i < n; ++i) {
-    push_back(t);
-  }
-}
-
-template<class T, class Alloc>
-void list<T, Alloc>::assign(std::initializer_list<value_type> l) {
-  *this = l;
-}
-
-template<class T, class Alloc>
-typename list<T, Alloc>::allocator_type list<T, Alloc>
-::get_allocator() const noexcept {
-  return alloc_;
+  return const_iterator(head_);
 }
 
 template<class T, class Alloc>
@@ -478,142 +345,98 @@ typename list<T, Alloc>::const_reverse_iterator list<T,
 
 template<class T, class Alloc>
 typename list<T, Alloc>::reference list<T, Alloc>::front() {
-  return static_cast<list_node<T> *>(head_.next_)->data_;
+  return head_->next_->value_;
 }
 
-//TODO maybe const T
 template<class T, class Alloc>
 typename list<T, Alloc>::const_reference list<T, Alloc>::front() const {
-  return static_cast<list_node<T> *>(head_.next_)->data_;
+  return head_->next_->value_;
 }
 
 template<class T, class Alloc>
 typename list<T, Alloc>::reference list<T, Alloc>::back() {
-  return static_cast<list_node<T> *>(head_.prev_)->data_;
+  return head_->prev_->value_;
 }
 
 template<class T, class Alloc>
 typename list<T, Alloc>::const_reference list<T, Alloc>::back() const {
-  return static_cast<list_node<T> *>(head_.prev_)->data_;
+  return head_->prev_->value_;
 }
 
 template<class T, class Alloc>
-bool list<T, Alloc>::empty() const noexcept {
-  return head_.size_ == 0;
+void list<T, Alloc>::push_back(const value_type &x) {
+  link_node_(cend(), create_node_with_lvalue_(x));
+  ++size_;
 }
 
 template<class T, class Alloc>
-typename list<T, Alloc>::size_type list<T, Alloc>::size() const noexcept {
-  return head_.size_;
-}
-
-template<class T, class Alloc>
-typename list<T, Alloc>::size_type list<T, Alloc>::max_size() const noexcept {
-  return std::min<size_type>(alloc_.max_size(),
-                             std::numeric_limits<difference_type>::max());
-}
-
-template<class T, class Alloc>
-template<class... Args>
-void list<T, Alloc>::emplace_front(Args &&... args) {
-  auto node = create_node_with_args(std::forward<T>(args) ...);
-  link_node_front(node);
-}
-
-template<class T, class Alloc>
-void list<T, Alloc>::pop_front() {
-  delete_node(static_cast<list_node<T> *>(head_.next_));
-}
-
-template<class T, class Alloc>
-template<class... Args>
-void list<T, Alloc>::emplace_back(Args &&... args) {
-  auto node = create_node_with_args(std::forward<T>(args) ...);
-  link_node_back(node);
-}
-template<class T, class Alloc>
-void list<T, Alloc>::pop_back() {
-  delete_node(static_cast<list_node<T> *>(head_.prev_));
-}
-
-template<class T, class Alloc>
-void list<T, Alloc>::delete_node(list_node<T> *p) {
-  auto front_node = p;
-  unlink_node(front_node);
-  alloc_.destroy(&front_node->data_);
-  head_.put_node(front_node);
+void list<T, Alloc>::push_back(value_type &&x) {
+  link_node_(cend(), create_node_with_args_(std::forward<T>(x)));
+  ++size_;
 }
 
 template<class T, class Alloc>
 void list<T, Alloc>::push_front(const value_type &x) {
-  list_node<T> *p = create_node_with_lvalue(x);
-  link_node_front(p);
+  link_node_(cbegin(), create_node_with_args_(std::forward<T>(x)));
+  ++size_;
 }
 
 template<class T, class Alloc>
 void list<T, Alloc>::push_front(value_type &&x) {
-  list_node<T> *p = create_node_with_rvalue(std::forward<T>(x));
-  link_node_front(p);
+  link_node_(cbegin(), create_node_with_args_(std::forward<T>(x)));
+  ++size_;
 }
 
 template<class T, class Alloc>
-template<class... Args>
-typename list<T, Alloc>::iterator list<T, Alloc>::emplace(
-    list::const_iterator position,
-    Args &&... args) {
-  auto node = create_node_with_args(std::forward<T>(args) ...);
-  link_node(position, node);
-  return iterator(node);
+list<T, Alloc>::list() noexcept(std::is_nothrow_default_constructible<
+    allocator_type>::value) : head_(), alloc_(), size_(0) {
+  init_head_();
 }
 
 template<class T, class Alloc>
-typename list<T, Alloc>::iterator list<T, Alloc>::insert(
-    list::const_iterator position,
-    const value_type &x) {
-  insert(position, 1, x);
+list<T, Alloc>::list(const allocator_type &a)
+    : head_(), alloc_(a), size_(0) {
+  init_head_();
 }
 
 template<class T, class Alloc>
-typename list<T, Alloc>::iterator list<T, Alloc>::insert(
-    list::const_iterator position,
-    value_type &&x) {
-  auto node = create_node_with_args(std::move_if_noexcept(x));
-  link_node(position, node);
-  return iterator(node);
+list<T, Alloc>::list(list::size_type n, const allocator_type &a)
+    : head_(), alloc_(a), size_(n) {
+  init_head_();
+  default_append_(cend(), n);
 }
 
 template<class T, class Alloc>
-typename list<T, Alloc>::iterator list<T, Alloc>::insert(
-    list::const_iterator position,
-    list::size_type n,
-    const value_type &x) {
-  for (; n > 0; --n) {
-    auto node = create_node_with_lvalue(x);
-    link_node(position, node);
-  }
-  return iterator(--position);
+list<T, Alloc>::list(list::size_type n,
+                     const value_type &value,
+                     const allocator_type &a)
+    : head_(), alloc_(a), size_(n) {
+  init_head_();
+  value_append_(cend(), n, value);
 }
 
 template<class T, class Alloc>
-template<class Iter>
-typename list<T, Alloc>::iterator list<T, Alloc>::insert(
-    list::const_iterator position,
-    Iter first,
-    Iter last,
-    typename std::enable_if
-        <!std::numeric_limits<Iter>::is_specialized>::type *) {
-  for (; first != last; ++first) {
-    auto node = create_node_with_lvalue(*first);
-    link_node(position, node);
-  }
-  return iterator(--position);
+void list<T, Alloc>::clear() noexcept {
+  erase(begin(), end());
+  size_ = 0;
 }
 
 template<class T, class Alloc>
-typename list<T, Alloc>::iterator list<T, Alloc>::insert(
-    list::const_iterator position,
-    std::initializer_list<value_type> il) {
-  return insert(position, il.begin(), il.end());
+list<T, Alloc>::~list() {
+  erase(begin(), end());
+  put_node_(head_);
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::pop_back() {
+  erase(const_iterator(head_->prev_), end());
+  --size_;
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::pop_front() {
+  erase(const_iterator(head_->next_), end());
+  --size_;
 }
 
 template<class T, class Alloc>
@@ -626,90 +449,162 @@ template<class T, class Alloc>
 typename list<T, Alloc>::iterator list<T, Alloc>::erase(
     list::const_iterator first,
     list::const_iterator last) {
-  for (; first != last; ++first) {
-    delete_node(first.base());
+  Node_ *prev = std::next(first, -1).base();
+  for (; first != last;) {
+    ++first;
+    Node_ *p = std::next(first, -1).base();
+    alloc_.destroy(&p->value_);
+    put_node_(p);
   }
-  return iterator(last);
+  prev->next_ = head_;
+  head_->prev_ = prev;
+  return (last);
 }
 
 template<class T, class Alloc>
-void list<T, Alloc>::default_append(list::size_type n) {
-  for (; n > 0; --n) {
-    list_node<T> *p = create_node_without_value();
-    link_node_back(p);
-  }
-}
-
-template<class T, class Alloc>
-void list<T, Alloc>::value_append(list::size_type n, const value_type &x) {
-  for (; n > 0; --n) {
-    list_node<T> *p = create_node_with_lvalue(x);
-    link_node_back(p);
-  }
-}
-
-//[pos;end())
-template<class T, class Alloc>
-void list<T, Alloc>::erase_at_end(const_iterator position) {
-  auto first = position;
-  auto last = end();
-  for (; first != last; ++first) {
-    alloc_.destroy(&*first);
-  }
-  first = ++iterator(position);
-  --position;
-  ++last;
-  for (; first != last; ++first) {
-    auto iter = first;
-    --iter;
-    head_.put_node(iter.base());
-  }
-  position.base()->next_ = &head_;
-  head_.prev_ = position.base();
-}
-
-template<class T, class Alloc>
-void list<T, Alloc>::resize(list::size_type sz) {
-  if (sz > head_.size_) {
-    default_append(sz - head_.size_);
-  } else if (sz < head_.size_) {
-    const_iterator iter = begin();
-    std::advance(iter, sz);
-    erase_at_end(iter);
+template<class Iter>
+list<T, Alloc>::list(Iter first, Iter last, const allocator_type &a,
+                     typename std::enable_if
+                         <!std::numeric_limits<Iter>::is_specialized>::type *)
+    : alloc_(a), size_(0) {
+  init_head_();
+  try {
+    range_append_(cend(), first, last);
+  } catch (...) {
+    put_node_(head_);
   }
 }
 
 template<class T, class Alloc>
-void list<T, Alloc>::resize(list::size_type sz, const value_type &c) {
-  if (sz > head_.size_) {
-    value_append(sz - head_.size_, c);
-  } else if (sz < head_.size_) {
-    const_iterator iter = begin();
-    std::advance(iter, sz);
-    erase_at_end(iter);
-  }
+list<T, Alloc>::list(const list &list, const allocator_type &a) : list::list(
+    list.begin(),
+    list.end(),
+    a) {}
+
+template<class T, class Alloc>
+list<T, Alloc>::list(list &&x) noexcept(std::is_nothrow_move_constructible<
+    allocator_type>::value) : size_(0) {
+  init_head_();
+  *this = std::move(x);
 }
 
 template<class T, class Alloc>
-void list<T, Alloc>::swap(list &l)
-noexcept(std::allocator_traits<allocator_type>::is_always_equal::value) {
-  (void) l;
-  //swap head node
+list<T, Alloc>::list(list &&x, const allocator_type &a)
+    : list::list(x, get_allocator()), alloc_(a) {}
+
+template<class T, class Alloc>
+list<T, Alloc>::list(std::initializer_list<value_type> l,
+                     const allocator_type &a)
+    : list::list(
+    l.begin(),
+    l.end(),
+    a) {}
+
+template<class T, class Alloc>
+list<T, Alloc> &list<T, Alloc>::operator=(const list &x) {
+  if (this == &x) {
+    return *this;
+  }
+  *this = std::move(list(x.begin(), x.end(), x.alloc_));
+  return *this;
+}
+
+template<class T, class Alloc>
+list<T, Alloc> &list<T, Alloc>::operator=(list &&x) noexcept(
+std::is_nothrow_move_assignable<allocator_type>::value) {
+  if (this == &x) {
+    return *this;
+  }
+  clear();
+  swap(x);
+  return *this;
+}
+
+template<class T, class Alloc>
+list<T, Alloc> &list<T, Alloc>::operator=(initializer_list<value_type> l) {
+  if (this == &l) {
+    return *this;
+  }
+  *this = std::move(list(l.begin(), l.end(), get_allocator()));
+  return *this;
+}
+
+template<class T, class Alloc>
+template<class Iter>
+void list<T, Alloc>::assign(Iter first, Iter last,
+                            typename std::enable_if
+                                <!std::numeric_limits<Iter>::is_specialized>::type *) {
+  list<T, Alloc> lst_(first, last, get_allocator());
+  *this = std::move(lst_);
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::assign(list::size_type n, const value_type &t) {
+  list<T, Alloc> lst_(n, t, get_allocator());
+  *this = std::move(lst_);
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::assign(initializer_list<value_type> l) {
+  *this = std::move(l);
+}
+
+template<class T, class Alloc>
+typename list<T, Alloc>::allocator_type list<T,
+                                             Alloc>::get_allocator() const noexcept {
+  return alloc_;
+}
+
+template<class T, class Alloc>
+bool list<T, Alloc>::empty() const noexcept {
+  return !size_;
+}
+
+template<class T, class Alloc>
+typename list<T, Alloc>::size_type list<T, Alloc>::size() const noexcept {
+  return size_;
+}
+template<class T, class Alloc>
+typename list<T, Alloc>::size_type list<T, Alloc>::max_size() const noexcept {
+  return std::min<size_type>(alloc_.max_size(),
+                             std::numeric_limits<difference_type>::max());
+}
+
+template<class T, class Alloc>
+template<class... Args>
+void list<T, Alloc>::emplace_front(Args &&... args) {
+  link_node_(cbegin(), create_node_with_args_(std::forward<T>(args)) ...);
+  ++size_;
+}
+
+template<class T, class Alloc>
+template<class... Args>
+void list<T, Alloc>::emplace_back(Args &&... args) {
+  link_node_(cend(), create_node_with_args_(std::forward<T>(args)) ...);
+  ++size_;
+}
+
+template<class T, class Alloc>
+void list<T,
+          Alloc>::swap(list &x) noexcept(std::allocator_traits<allocator_type>::is_always_equal::value) {
+  std::swap(head_, x.head_);
+  std::swap(size_, x.size_);
+  std::swap(alloc_, x.alloc_);
 }
 
 template<class T, class Alloc>
 void list<T, Alloc>::splice(list::const_iterator position, list &x) {
-  if (x.head_.size_ == 0) {
+  if (x.size_ == 0) {
     return;
   }
-  auto pos = position.base();
-  x.head_.prev_->next_ = pos;
-  x.head_.next_->prev_ = pos->prev_;
-  pos->prev_->next_ = x.head_.next_;
-  pos->prev_ = x.head_.prev_;
-  head_.size_ += x.head_.size_;
-  x.head_.prev_ = x.head_.next_ = &x.head_;
-  x.head_.size_ = 0;
+  Node_ *p = position.base();
+  x.head_->prev_->next_ = p;
+  x.head_->next_->prev_ = p->prev_;
+  p->prev_->next_ = x.head_->next_;
+  p->prev_ = x.head_->prev_;
+  size_ += x.size_;
+  x.head_->prev_ = x.head_->next_ = x.head_;
+  x.size_ = 0;
 }
 
 template<class T, class Alloc>
@@ -718,33 +613,34 @@ void list<T, Alloc>::splice(list::const_iterator position, list &&x) {
 }
 
 template<class T, class Alloc>
-typename list<T, Alloc>::size_type list<T, Alloc>::get_size(
-    list::const_iterator first,
-    list::const_iterator last) {
-  return (std::distance(first, last));
-}
-
-template<class T, class Alloc>
 void list<T, Alloc>::splice(list::const_iterator position,
                             list &x,
                             list::const_iterator first,
                             list::const_iterator last) {
-  size_type size = get_size(first, last);
+  size_type size = std::distance(first, last);
   if (size == 0) {
     return;
   }
-  x.head_.size_ -= size;
-  head_.size_ += size;
-  auto n_pos = position.base();
-  auto n_first = first.base();
-  auto n_last = last.base();
+  x.size_ -= size;
+  size_ += size;
+  Node_ *n_pos = position.base();
+  Node_ *n_first = first.base();
+  Node_ *n_last = last.base();
   n_first->prev_->next_ = n_last;
-  n_last = static_cast<list_node<value_type> *>(n_last->prev_);
+  n_last = n_last->prev_;
   n_last->next_->prev_ = n_first->prev_;
   n_pos->prev_->next_ = n_first;
   n_first->prev_ = n_pos->prev_;
   n_pos->prev_ = n_last;
   n_last->next_ = n_pos;
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::splice(list::const_iterator position,
+                            list &&x,
+                            list::const_iterator first,
+                            list::const_iterator last) {
+  splice(position, x, first, last);
 }
 
 template<class T, class Alloc>
@@ -762,22 +658,96 @@ void list<T, Alloc>::splice(list::const_iterator position,
 }
 
 template<class T, class Alloc>
-void list<T, Alloc>::splice(list::const_iterator position,
-                            list &&x,
-                            list::const_iterator first,
-                            list::const_iterator last) {
-  splice(position, x, first, last);
+template<class... Args>
+typename list<T, Alloc>::iterator list<T, Alloc>::emplace(
+    list::const_iterator position,
+    Args &&... args) {
+  Node_ *node = create_node_with_args_(std::forward<T>(args) ...);
+  link_node_(position, node);
+  ++size_;
+  return iterator(node);
+}
+
+template<class T, class Alloc>
+typename list<T, Alloc>::iterator list<T, Alloc>::insert(
+    list::const_iterator position,
+    const value_type &x) {
+  return insert(position, 1, x);
+}
+
+template<class T, class Alloc>
+typename list<T, Alloc>::iterator list<T, Alloc>::insert(
+    list::const_iterator position,
+    value_type &&x) {
+  Node_ *node = create_node_with_args(std::move_if_noexcept(x));
+  link_node_(position, node);
+  ++size_;
+  return iterator(node);
+}
+
+template<class T, class Alloc>
+typename list<T, Alloc>::iterator list<T, Alloc>::insert(
+    list::const_iterator position,
+    list::size_type n,
+    const value_type &x) {
+  value_append_(position, n, x);
+  size_ += n;
+  return iterator(--position);
+}
+
+template<class T, class Alloc>
+template<class Iter>
+typename list<T, Alloc>::iterator list<T, Alloc>::insert(
+    list::const_iterator position,
+    Iter first,
+    Iter last,
+    typename std::enable_if
+        <!std::numeric_limits<Iter>::is_specialized>::type *) {
+  size_ += range_append_(position, first, last);
+  return iterator(--position);
+}
+
+template<class T, class Alloc>
+typename list<T, Alloc>::iterator list<T, Alloc>::insert(
+    list::const_iterator position,
+    std::initializer_list<value_type> il) {
+  return insert(position, il.begin(), il.end());
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::resize(list::size_type sz) {
+  if (sz > size_) {
+    default_append_(sz - size_);
+  } else if (sz < size_) {
+    const_iterator iter = begin();
+    std::advance(iter, sz);
+    erase(iter, end());
+  }
+}
+
+template<class T, class Alloc>
+void list<T, Alloc>::resize(list::size_type sz, const value_type &c) {
+  if (sz > size_) {
+    value_append(sz - size_, c);
+  } else if (sz < size_) {
+    const_iterator iter = begin();
+    std::advance(iter, sz);
+    erase(iter, end());
+  }
 }
 
 template<class T, class Alloc>
 void list<T, Alloc>::remove(const value_type &value) {
-  for (auto it = begin(); it != end();) {
-    if (*it == value) {
-      auto p = it.base();
-      ++it;
-      delete_node(static_cast<list_node<T> *>(p));
+  for (const_iterator i = begin(), e = end(); i != e;) {
+    if (*i == value) {
+      const_iterator j = std::next(i);
+      for (; j != e && *i == value; ++j);
+      i = erase(i, j);
+      if (i != e) {
+        ++i;
+      }
     } else {
-      ++it;
+      ++i;
     }
   }
 }
@@ -785,13 +755,28 @@ void list<T, Alloc>::remove(const value_type &value) {
 template<class T, class Alloc>
 template<class Pred>
 void list<T, Alloc>::remove_if(Pred pred) {
-  for (auto it = begin(); it != end();) {
-    if (pred(*it)) {
-      auto p = it.base();
-      ++it;
-      delete_node(static_cast<list_node<T> *>(p));
+  for (const_iterator i = begin(), e = end(); i != e;) {
+    if (pred(*i)) {
+      const_iterator j = std::next(i);
+      for (; j != e && pred(*j); ++j);
+      i = erase(i, j);
+      if (i != e) {
+        ++i;
+      }
     } else {
-      ++it;
+      ++i;
+    }
+  }
+}
+
+template<class T, class Alloc>
+template<class BinaryPredicate>
+void list<T, Alloc>::unique(BinaryPredicate binary_pred) {
+  for (const_iterator i = begin(), e = end(); i != e;) {
+    const_iterator j = std::next(i);
+    for (; j != e && binary_pred(*i, *j); ++j);
+    if (++i != j) {
+      i = erase(i, j);
     }
   }
 }
@@ -799,21 +784,6 @@ void list<T, Alloc>::remove_if(Pred pred) {
 template<class T, class Alloc>
 void list<T, Alloc>::unique() {
   unique(std::equal_to<value_type>());
-}
-
-template<class T, class Alloc>
-template<class BinaryPredicate>
-void list<T, Alloc>::unique(BinaryPredicate binary_pred) {
-  for (auto it = begin(); it != end();) {
-    auto iter = it++;
-    if (binary_pred(*iter, *it)) {
-      auto p = it.base();
-      ++it;
-      delete_node(static_cast<list_node<T> *>(p));
-    } else {
-      ++it;
-    }
-  }
 }
 
 template<class T, class Alloc>
@@ -855,68 +825,30 @@ void list<T, Alloc>::merge(list &&x) {
 }
 
 template<class T, class Alloc>
-template<class Compare>
-void list<T, Alloc>::sort(Compare comp) {
-  if (head_.size_ <= 1) {
+void list<T, Alloc>::reverse() noexcept {
+  if (size_ <= 1) {
     return;
   }
-  head_.prev_->next_ = NULL;
-  head_.next_->prev_ = NULL;
-  head_.next_ = mergeSort(static_cast<list_node<T> *>(head_.next_), comp);
-  head_.next_->prev_ = &head_;
-  auto end = begin();
-  std::advance(end, head_.size_ - 1);
-  head_.prev_ = end.base();
-  head_.prev_->next_ = &head_;
-}
-
-
-template<class T, class Alloc>
-inline list_node<T> *list<T, Alloc>::split(list_node<T> *head) {
-  list_node<T> *fast = head;
-  list_node<T> *slow = head;
-  while (fast->next_ && fast->next_->next_)
-  {
-    fast = static_cast<list_node<T> *>(fast->next_->next_);
-    slow = static_cast<list_node<T> *>(slow->next_);
+  iterator e = end();
+  for (iterator i = begin(); i != e;) {
+    std::swap(i.base()->prev_, i.base()->next_);
+    std::advance(i, -1);
   }
-  auto *temp = static_cast<list_node<T> *>(slow->next_);
-  slow->next_ = NULL;
-  return temp;
+  std::swap(head_->next_, head_->prev_);
 }
 
 template<class T, class Alloc>
 template<class Compare>
-inline list_node<T> *list<T, Alloc>::merge(list_node<T> *first, list_node<T> *second, Compare comp) {
-  if (!first)
-    return second;
-  if (!second)
-    return first;
-  if (comp(first->data_, second->data_))
-  {
-    first->next_ = merge(static_cast<list_node<T> *>(first->next_), second, comp);
-    first->next_->prev_ = first;
-    first->prev_ = &head_;
-    return first;
-  }
-  else
-  {
-    second->next_ = merge(first, static_cast<list_node<T> *>(second->next_), comp);
-    second->next_->prev_ = second;
-    second->prev_ = &head_;
-    return second;
-  }
-}
-
-template<class T, class Alloc>
-template<class Compare>
-inline list_node<T> *list<T, Alloc>::mergeSort(list_node<T> *head, Compare comp) {
-  if (!head || !head->next_)
-    return head;
-  list_node<T> *second = split(head);
-  head = mergeSort(head, comp);
-  second = mergeSort(second, comp);
-  return merge(head,second, comp);
+void list<T, Alloc>::sort(Compare comp) {
+  if (size_ <= 1)
+    return;
+  list divided(get_allocator());
+  iterator b = begin();
+  std::advance(b, size_ / 2);
+  divided.splice(divided.begin(), *this, b, end());
+  divided.sort();
+  sort();
+  merge(divided, comp);
 }
 
 template<class T, class Alloc>
@@ -925,18 +857,52 @@ void list<T, Alloc>::sort() {
 }
 
 template<class T, class Alloc>
-void list<T, Alloc>::reverse() noexcept {
-  if (head_.size_ <= 1) {
-    return;
-  }
-  iterator e = end();
-  for (iterator i = begin(); i != e;)
-  {
-    std::swap(i.base()->prev_, i.base()->next_);
-    std::advance(i, -1);
-  }
-  std::swap(head_.next_, head_.prev_);
+inline
+bool
+operator==(const list<T, Alloc> &x, const list<T, Alloc> &y) {
+  return x.size() == y.size() && std::equal(x.begin(), x.end(), y.begin());
 }
 
+template<class T, class Alloc>
+inline
+bool
+operator<(const list<T, Alloc> &x, const list<T, Alloc> &y) {
+  return std::lexicographical_compare(x.begin(), x.end(), y.begin(), y.end());
+}
+
+template<class T, class Alloc>
+inline
+bool
+operator!=(const list<T, Alloc> &x, const list<T, Alloc> &y) {
+  return !(x == y);
+}
+
+template<class T, class Alloc>
+inline
+bool
+operator>(const list<T, Alloc> &x, const list<T, Alloc> &y) {
+  return y < x;
+}
+
+template<class T, class Alloc>
+inline
+bool
+operator>=(const list<T, Alloc> &x, const list<T, Alloc> &y) {
+  return !(x < y);
+}
+
+template<class T, class Alloc>
+inline
+bool
+operator<=(const list<T, Alloc> &x, const list<T, Alloc> &y) {
+  return !(y < x);
+}
+
+template<class T, class Alloc>
+inline
+void
+swap(list<T, Alloc> &x, list<T, Alloc> &y) noexcept(noexcept(x.swap(y))) {
+  x.swap(y);
+}
 
 }

@@ -54,6 +54,10 @@ random_access_iterator<T>::random_access_iterator(
     : data_(other.base()) {}
 
 template<class T>
+random_access_iterator<T>::random_access_iterator(random_access_iterator<
+    const value_type> const& other) : data_(other.base()) {}
+
+template<class T>
 random_access_iterator<T>::random_access_iterator(
     random_access_iterator &&other)
     noexcept : data_(std::move(other.data_)) {}
@@ -157,10 +161,6 @@ typename random_access_iterator<T>::pointer
     random_access_iterator<T>::base() const {
   return data_;
 }
-
-template<class T>
-random_access_iterator<T>::random_access_iterator(random_access_iterator<
-    const value_type> const& other) : data_(other.base()) {}
 
 template<class Iter1, class Iter2>
 inline
